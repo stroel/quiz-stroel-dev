@@ -137,7 +137,7 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 ### Open punten
 
 - `/landen/` heeft de richting "land aangeduid, naam tikken". De tweede richting, "naam gegeven, tik op de kaart", komt er als keuze **Vraag naar** bij, zoals bij de hoofdsteden (beslissing van Steve, 18-10-2026). `/spreuken/` staat als "Binnenkort" op de startpagina.
-- `/aardrijkskunde/` (zeeën, rivieren, gebergtes) heeft alleen de richting "aangeduid, naam tikken". De vormen staan in `public/geo/geo.json` (in git); hoe je ze opnieuw bouwt staat in `docs/aardrijkskunde.md`.
+- `/aardrijkskunde/` (zeeën, rivieren, gebergtes) heeft beide richtingen, net als `/landen/`. De vormen staan in `public/geo/geo.json` (in git); hoe je ze opnieuw bouwt staat in `docs/aardrijkskunde.md`.
 - Land → vlag (raster van 9 of 16 met lookalikes) is nog niet gebouwd.
 - PWA: er zijn alleen meta-tags voor "zet op beginscherm"; een manifest en service worker voor offline gebruik komen later.
 - Er is nog geen testrunner. De matcher is met de hand nagekeken tegen de gevallen in `docs/vlaggen.md`; Vitest toevoegen is een beslissing voor Steve.

@@ -1,6 +1,6 @@
-import { geoBounds, geoDistance } from 'd3-geo';
+import { geoBounds, geoCentroid, geoDistance } from 'd3-geo';
 import type { Feature, FeatureCollection, Geometry } from 'geojson';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { feature } from 'topojson-client';
 
 /** One shape on the world map, with our flag code as id ('' for shapes we never ask about). */
@@ -78,4 +78,35 @@ export function radiusAround(target: FeatureCollection, centre: [number, number]
   ];
   const radians = Math.max(...corners.map((corner) => geoDistance(centre, corner)));
   return (radians * 180) / Math.PI;
+}
+
+/** One country (all its shapes together) with its centre and size, for tapping. */
+export interface CountryShape {
+  id: string;
+  collection: FeatureCollection;
+  centre: [number, number];
+  radius: number;
+}
+
+// Centroids of 226 countries take a moment; every question after the first reuses them.
+let countryShapes: { from: Country[]; shapes: CountryShape[] } | null = null;
+
+/** Every country we ask about as one tappable shape, once the map has loaded. */
+export function useCountryShapes(): CountryShape[] | null {
+  const countries = useWorld();
+  return useMemo(() => {
+    if (!countries) return null;
+    if (countryShapes?.from === countries) return countryShapes.shapes;
+    const byCode = new Map<string, Country[]>();
+    for (const country of countries) {
+      if (country.id) byCode.set(country.id, [...(byCode.get(country.id) ?? []), country]);
+    }
+    const shapes = [...byCode].map(([id, features]) => {
+      const collection: FeatureCollection = { type: 'FeatureCollection', features };
+      const centre = geoCentroid(collection);
+      return { id, collection, centre, radius: radiusAround(collection, centre) };
+    });
+    countryShapes = { from: countries, shapes };
+    return shapes;
+  }, [countries]);
 }

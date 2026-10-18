@@ -6,8 +6,14 @@ anders is.
 
 ## Spelvorm
 
-Een zee, rivier of gebergte is aangeduid op de kaart, en je tikt de naam. Het instelscherm heeft
-geen regio's en geen extra's, maar **Reeksen** (onthouden in `quiz:aardrijkskunde:groups`):
+Bovenaan het instelscherm staat **Vraag naar** (onthouden in `quiz:aardrijkskunde:direction`):
+
+- **De naam**: een zee, rivier of gebergte is aangeduid op de kaart, en je tikt de naam.
+- **De plaats**: je krijgt de naam en tikt het aan op de kaart. Zie
+  [Tikken op de kaart](#tikken-op-de-kaart).
+
+Daaronder geen regio's en geen extra's, maar **Reeksen** (onthouden in
+`quiz:aardrijkskunde:groups`):
 
 | Reeks                 | Aantal | Bron          |
 | --------------------- | ------ | ------------- |
@@ -38,6 +44,22 @@ dataset.
   rivier, 2,5° voor een buitenlandse rivier of een gebergte, 5° voor een zee.
 - **Bronvermelding** linksonder: "Natural Earth · © OpenStreetMap-bijdragers". De licentie van
   OpenStreetMap (ODbL) vraagt dat.
+
+## Tikken op de kaart
+
+`src/components/geo/GeoTapMap.tsx`, op dezelfde tikkaart als de landen
+(`src/components/countries/TapMap.tsx`; slepen, zoomen, hints en kleuren staan in
+[`landen.md`](landen.md#tikken-op-de-kaart)).
+
+- Alleen wat van dezelfde soort is, kun je aantikken: bij een rivier alle rivieren, bij een zee
+  alle zeeën, bij een gebergte alle gebergtes.
+- **Rivieren** zijn blauwe lijnen met een brede, onzichtbare rand van 22 px om op te tikken: een
+  lijn van 2 px raak je niet met een vinger. **Zeeën** liggen onder de landen, met hun grenzen als
+  dunne blauwe lijn. **Gebergtes** zijn lichtgrijze vlakken.
+- **Start**: een Belgische rivier begint op België, al het andere op het werelddeel waar het ligt
+  (een oceaan op een uitsnede die groot genoeg is).
+- Fout getikt: "Nee, dat is de Maas." De historiek houdt beide richtingen apart bij (`maas` en
+  `place:maas`).
 
 ## De dataset
 
@@ -70,3 +92,8 @@ geen netwerk nodig. Opnieuw bouwen, alleen als de dataset verandert:
 Het script vereenvoudigt elke vorm (Douglas–Peucker: 0,03° voor zeeën en gebergtes, 0,01° voor
 rivieren, 0,002° voor Belgische rivieren) en rondt de coördinaten af. Vindt het voor een vraag
 geen vorm, dan stopt het met een fout.
+
+Een vlak houdt zijn gaten (eilanden in een zee) bij zich, en elk vlak dat d3 groter ziet dan een
+halve wereldbol, wordt omgedraaid. d3 rekent op een bol, waar de richting van een rand zegt wat
+binnen ligt: verkeerd om wordt een zee "de hele wereld behalve die zee". Zo ging het eerst mis
+(een tik bij de Tasmanzee landde op de Hudsonbaai).

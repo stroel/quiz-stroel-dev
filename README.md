@@ -11,7 +11,7 @@ startpagina laat je een quiz kiezen:
 - **Landen** (`/landen/`): een land is ingekleurd op de kaart en je tikt de naam. Zie
   [`docs/landen.md`](docs/landen.md).
 - **Aardrijkskunde** (`/aardrijkskunde/`): een zee, rivier of gebergte is aangeduid op de kaart en
-  je tikt de naam. Zie [`docs/aardrijkskunde.md`](docs/aardrijkskunde.md).
+  je tikt de naam, of je krijgt de naam en tikt het aan op de kaart. Zie [`docs/aardrijkskunde.md`](docs/aardrijkskunde.md).
 - **Spreuken** (`/spreuken/`): wie zei het? Binnenkort.
 
 Elke quiz heeft een **Overzicht** (`/vlaggen/overzicht/`, `/hoofdsteden/overzicht/`) met alle

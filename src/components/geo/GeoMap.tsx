@@ -20,7 +20,7 @@ export function loadGeo(): Promise<GeoShapes> {
   return shapes;
 }
 
-function useGeo(): GeoShapes | null {
+export function useGeo(): GeoShapes | null {
   const [loaded, setLoaded] = useState<GeoShapes | null>(null);
   useEffect(() => {
     let current = true;
@@ -39,7 +39,7 @@ function useGeo(): GeoShapes | null {
   return loaded;
 }
 
-const KIND: Record<GeoEntry['kind'], HighlightKind> = {
+export const KIND: Record<GeoEntry['kind'], HighlightKind> = {
   zee: 'sea',
   rivier: 'line',
   gebergte: 'area',

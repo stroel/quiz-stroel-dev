@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import CountryMap from '@/components/countries/CountryMap';
-import TapMap from '@/components/countries/TapMap';
-import { loadWorld } from '@/components/countries/world';
+import TapMap, { REGION_VIEW } from '@/components/countries/TapMap';
+import { loadWorld, useCountryShapes } from '@/components/countries/world';
 import Panel from '@/components/Panel';
 import CheckRow from '@/components/quiz/CheckRow';
 import QuizFlow from '@/components/quiz/QuizFlow';
@@ -60,6 +60,28 @@ function tapFor(tap: TapState): TapState {
   };
 }
 
+function CountryTapMap({
+  code,
+  start,
+  tap,
+}: {
+  code: string;
+  start: (typeof REGION_VIEW)[keyof typeof REGION_VIEW];
+  tap: TapState;
+}) {
+  const shapes = useCountryShapes();
+  return (
+    <TapMap
+      targetId={code}
+      shapes={shapes}
+      kind="land"
+      startView={start}
+      tap={tapFor(tap)}
+      label={T.countries.tapMapLabel}
+    />
+  );
+}
+
 /** The map quiz: name the marked country, or find a named country on the map. */
 export default function CountryQuiz() {
   const [direction, setDirection] = useState<Direction>(() =>
@@ -109,7 +131,9 @@ export default function CountryQuiz() {
         const code = question.flag!;
         if (direction === 'name') return <CountryMap key={question.id} code={code} />;
         const region = FLAG_BY_CODE.get(code)?.regions[0] ?? 'europa';
-        return <TapMap key={question.id} code={code} region={region} tap={tapFor(tap)} />;
+        return (
+          <CountryTapMap key={question.id} code={code} start={REGION_VIEW[region]} tap={tap} />
+        );
       }}
       placeholder={T.countries.placeholder}
       tapping={direction === 'place' ? TAPPING : undefined}

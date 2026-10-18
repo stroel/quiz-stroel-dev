@@ -15,10 +15,14 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { geoArea } from 'd3-geo';
+
 import { GEO, type GeoEntry } from '../src/data/geo.ts';
 
 type Point = [number, number];
 type Line = Point[];
+/** An outer ring and its holes. */
+type Polygon = Line[];
 
 interface NeFeature {
   properties: Record<string, unknown>;
@@ -74,22 +78,32 @@ function round(line: Line, decimals: number): Line {
   return line.map(([x, y]) => [Math.round(x * factor) / factor, Math.round(y * factor) / factor]);
 }
 
-/** Every line or ring in a GeoJSON geometry, flattened. */
-function linesOf(geometry: NeFeature['geometry']): { lines: Line[]; polygon: boolean } {
-  if (!geometry) return { lines: [], polygon: false };
+/** The lines of a river, or the polygons (outer ring plus holes) of a sea or range. */
+function partsOf(geometry: NeFeature['geometry']): { lines: Line[]; polygons: Polygon[] } {
+  if (!geometry) return { lines: [], polygons: [] };
   const c = geometry.coordinates as unknown;
   switch (geometry.type) {
     case 'LineString':
-      return { lines: [c as Line], polygon: false };
+      return { lines: [c as Line], polygons: [] };
     case 'MultiLineString':
-      return { lines: c as Line[], polygon: false };
+      return { lines: c as Line[], polygons: [] };
     case 'Polygon':
-      return { lines: c as Line[], polygon: true };
+      return { lines: [], polygons: [c as Polygon] };
     case 'MultiPolygon':
-      return { lines: (c as Line[][]).flat(), polygon: true };
+      return { lines: [], polygons: c as Polygon[] };
     default:
-      return { lines: [], polygon: false };
+      return { lines: [], polygons: [] };
   }
+}
+
+/**
+ * d3 draws on a sphere, where a ring's direction says which side is inside:
+ * the wrong way round, a sea becomes "the whole world except that sea". A
+ * polygon that covers more than half the globe is turned around.
+ */
+function upright(polygon: Polygon): Polygon {
+  const area = geoArea({ type: 'Polygon', coordinates: polygon });
+  return area > 2 * Math.PI ? polygon.map((ring) => [...ring].reverse()) : polygon;
 }
 
 function inBox(line: Line, box: [number, number, number, number]): boolean {
@@ -109,7 +123,7 @@ async function main() {
   const features = [];
   for (const entry of GEO) {
     let lines: Line[] = [];
-    let polygon = false;
+    let polygons: Polygon[] = [];
 
     if (entry.ne) {
       const { names, bbox } = entry.ne;
@@ -118,9 +132,9 @@ async function main() {
         return typeof name === 'string' && names.includes(name);
       });
       for (const feature of matches) {
-        const shape = linesOf(feature.geometry);
-        polygon ||= shape.polygon;
-        lines.push(...shape.lines.filter((line) => !bbox || inBox(line, bbox)));
+        const parts = partsOf(feature.geometry);
+        lines.push(...parts.lines.filter((line) => !bbox || inBox(line, bbox)));
+        polygons.push(...parts.polygons.filter((polygon) => !bbox || inBox(polygon[0]!, bbox)));
       }
     } else if (entry.osm) {
       const json = JSON.parse(await readFile(join(osmDir, `rel-${entry.osm}.json`), 'utf8')) as {
@@ -133,19 +147,23 @@ async function main() {
       }
     }
 
-    lines = lines
-      .map((line) => round(simplify(line, toleranceFor(entry)), decimalsFor(entry)))
-      .filter((line) => line.length >= (polygon ? 4 : 2));
-    if (lines.length === 0) throw new Error(`No shape for ${entry.id}`);
+    const tidy = (line: Line) => round(simplify(line, toleranceFor(entry)), decimalsFor(entry));
+    lines = lines.map(tidy).filter((line) => line.length >= 2);
+    polygons = polygons
+      .map((polygon) => polygon.map(tidy).filter((ring) => ring.length >= 4))
+      // A hole may vanish in simplifying; an outer ring that vanished takes its holes along.
+      .filter((polygon) => polygon.length > 0 && polygon[0]!.length >= 4)
+      .map(upright);
+    if (lines.length === 0 && polygons.length === 0) throw new Error(`No shape for ${entry.id}`);
 
     features.push({
       type: 'Feature',
       id: entry.id,
       properties: {},
-      // Rings of every polygon kept as separate polygons: holes are rare at this scale.
-      geometry: polygon
-        ? { type: 'MultiPolygon', coordinates: lines.map((ring) => [ring]) }
-        : { type: 'MultiLineString', coordinates: lines },
+      geometry:
+        polygons.length > 0
+          ? { type: 'MultiPolygon', coordinates: polygons }
+          : { type: 'MultiLineString', coordinates: lines },
     });
   }
 

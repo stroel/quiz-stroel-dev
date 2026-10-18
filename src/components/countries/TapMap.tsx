@@ -1,22 +1,31 @@
-import { geoAzimuthalEqualArea, geoCentroid, geoCircle, geoDistance, geoPath } from 'd3-geo';
+import { geoAzimuthalEqualArea, geoCircle, geoDistance, geoPath } from 'd3-geo';
 import type { FeatureCollection } from 'geojson';
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 
-import { clamp, radiusAround, useSize, useWorld, type Country } from '@/components/countries/world';
+import type { HighlightKind } from '@/components/countries/HighlightMap';
+import { clamp, useSize, useWorld } from '@/components/countries/world';
 import Icon from '@/components/Icon';
 import type { TapState } from '@/components/quiz/QuizRound';
 import type { Region } from '@/data/flags';
 import { T } from '@/i18n/nl';
 
-interface View {
+export interface View {
   centre: [number, number];
   /** Degrees from the centre to the shorter edge of the stage. */
   radius: number;
 }
 
-// Where a question starts: the region the country lies in, so a phone screen
-// shows land big enough to tap. Which region it is, is the only thing given away.
-const REGION_VIEW: Record<Region, View> = {
+/** Something to tap: a country, a sea, a river or a range, with its centre and size in degrees. */
+export interface TapShape {
+  id: string;
+  collection: FeatureCollection;
+  centre: [number, number];
+  radius: number;
+}
+
+// Where a question starts: the region it lies in, so a phone screen shows land
+// big enough to tap. Which region it is, is the only thing given away.
+export const REGION_VIEW: Record<Region, View> = {
   europa: { centre: [15, 52], radius: 20 },
   azie: { centre: [90, 32], radius: 42 },
   afrika: { centre: [20, 2], radius: 38 },
@@ -51,23 +60,38 @@ interface Press {
   pinch: number;
 }
 
+// The wide, invisible stroke a river is tapped by: a 3 px line is too thin for a finger.
+const LINE_HIT_WIDTH = 22;
+
 /**
- * The world to tap on. Starts on the country's region; drag to pan, pinch,
- * scroll or use + and − to zoom. Every country is a target; small ones also
- * get a dot. Wrong taps turn red, the answer shows once found or given up.
+ * The world to tap on. Starts on `startView`; drag to pan, pinch, scroll or use
+ * + and − to zoom. Every shape is a target: countries (small ones also get a
+ * dot), seas under the land, ranges as light areas, rivers as blue lines with a
+ * wide invisible edge. Wrong taps turn red, the answer shows once found or
+ * given up.
  */
 export default function TapMap({
-  code,
-  region,
+  targetId,
+  shapes,
+  kind,
+  startView,
   tap,
+  label,
+  credit,
 }: {
-  code: string;
-  region: Region;
+  targetId: string;
+  /** What can be tapped; null while it loads. */
+  shapes: TapShape[] | null;
+  kind: HighlightKind;
+  startView: View;
   tap: TapState;
+  label: string;
+  credit?: string;
 }) {
   const countries = useWorld();
   const [ref, size] = useSize<HTMLDivElement>();
-  const [view, setView] = useState<View>(REGION_VIEW[region]);
+  const [view, setView] = useState<View>(startView);
+  const code = targetId;
   const press = useRef<Press>({
     pointers: new Map(),
     start: null,
@@ -76,19 +100,6 @@ export default function TapMap({
     pinch: 0,
   });
 
-  // Centroid and size of every country, once per page.
-  const shapes = useMemo(() => {
-    if (!countries) return null;
-    const byCode = new Map<string, Country[]>();
-    for (const country of countries) {
-      if (country.id) byCode.set(country.id, [...(byCode.get(country.id) ?? []), country]);
-    }
-    return [...byCode].map(([id, features]) => {
-      const collection: FeatureCollection = { type: 'FeatureCollection', features };
-      const centre = geoCentroid(collection);
-      return { id, collection, centre, radius: radiusAround(collection, centre) };
-    });
-  }, [countries]);
   const target = shapes?.find((shape) => shape.id === code);
 
   const hintRadius =
@@ -126,17 +137,18 @@ export default function TapMap({
     return {
       projection,
       sea: path({ type: 'Sphere' }) ?? '',
-      // Shapes we never ask about (Antarctica) are land, but not a target.
+      // Land that is not a target: for countries the shapes we never ask about
+      // (Antarctica), for everything else all of it.
       background: countries
-        .filter((country) => !country.id)
+        .filter((country) => kind !== 'land' || !country.id)
         .map((country) => path(country) ?? '')
         .join(''),
       shapes: shapes.map((shape) => {
         const d = path(shape.collection) ?? '';
         // Only on the near side of the globe, and only if the shape is too small to hit.
         const facing = geoDistance(shape.centre, view.centre) < Math.PI / 2;
-        const point =
-          facing && d && path.area(shape.collection) < TINY_AREA ? projection(shape.centre) : null;
+        const tiny = kind === 'land' && path.area(shape.collection) < TINY_AREA;
+        const point = facing && d && tiny ? projection(shape.centre) : null;
         return { id: shape.id, d, dot: point };
       }),
       hint:
@@ -144,13 +156,66 @@ export default function TapMap({
           ? (path(geoCircle().center(target.centre).radius(hintRadius)()) ?? '')
           : '',
     };
-  }, [shapes, countries, size, view, target, hintRadius]);
+  }, [shapes, countries, size, view, target, hintRadius, kind]);
 
+  // Colour per state; a river is a stroke, everything else a fill.
   function fill(id: string): string {
-    if (id === code && tap.status === 'correct') return 'fill-emerald-600 stroke-emerald-700';
-    if (id === code && tap.status === 'revealed') return 'fill-accent-800 stroke-accent-800';
-    if (tap.picked.includes(id)) return 'fill-rose-300 stroke-rose-500';
-    return 'fill-white stroke-slate-300 hover:fill-slate-100';
+    const line = kind === 'line';
+    if (id === code && tap.status === 'correct')
+      return line ? 'stroke-emerald-600' : 'fill-emerald-600 stroke-emerald-700';
+    if (id === code && tap.status === 'revealed')
+      return line ? 'stroke-accent-800' : 'fill-accent-800 stroke-accent-800';
+    if (tap.picked.includes(id)) return line ? 'stroke-rose-500' : 'fill-rose-300 stroke-rose-500';
+    switch (kind) {
+      case 'land':
+        return 'fill-white stroke-slate-300 hover:fill-slate-100';
+      case 'sea':
+        return 'fill-sky-100 stroke-sky-400/70 hover:fill-sky-200';
+      case 'area':
+        return 'fill-slate-500/20 stroke-slate-400 hover:fill-slate-500/35';
+      case 'line':
+        return 'stroke-sky-500';
+    }
+  }
+
+  function shapePaths() {
+    if (!drawing) return null;
+    return drawing.shapes.map((shape) =>
+      kind === 'line' ? (
+        <g key={shape.id} data-code={shape.id} className="group cursor-pointer">
+          <path
+            d={shape.d}
+            className="fill-none stroke-transparent"
+            strokeWidth={LINE_HIT_WIDTH}
+            strokeLinecap="round"
+            pointerEvents="stroke"
+          />
+          <path
+            d={shape.d}
+            className={`fill-none transition-colors group-hover:stroke-sky-700 ${fill(shape.id)}`}
+            strokeWidth={emphasised(shape.id) ? 4 : 2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+      ) : (
+        <path
+          key={shape.id}
+          d={shape.d}
+          data-code={shape.id}
+          className={`cursor-pointer transition-colors ${fill(shape.id)}`}
+          strokeWidth={kind === 'land' ? 0.75 : 1.25}
+        />
+      ),
+    );
+  }
+
+  // A river that is answered or picked is drawn thicker, so its colour shows.
+  function emphasised(shapeId: string): boolean {
+    return (
+      (shapeId === code && tap.status !== 'asking' && tap.status !== 'wrong') ||
+      tap.picked.includes(shapeId)
+    );
   }
 
   function zoom(steps: number) {
@@ -239,20 +304,14 @@ export default function TapMap({
           height={size.height}
           viewBox={`0 0 ${size.width} ${size.height}`}
           role="img"
-          aria-label={T.countries.tapMapLabel}
+          aria-label={label}
           className="block"
         >
           <path d={drawing.sea} className="fill-sky-100" />
+          {/* Seas lie under the land, so the coast cuts them out. */}
+          {kind === 'sea' && shapePaths()}
           <path d={drawing.background} className="fill-white stroke-slate-300" strokeWidth={0.75} />
-          {drawing.shapes.map((shape) => (
-            <path
-              key={shape.id}
-              d={shape.d}
-              data-code={shape.id}
-              className={`cursor-pointer transition-colors ${fill(shape.id)}`}
-              strokeWidth={0.75}
-            />
-          ))}
+          {kind !== 'sea' && shapePaths()}
           {drawing.hint && (
             <path
               d={drawing.hint}
@@ -276,6 +335,11 @@ export default function TapMap({
               ),
           )}
         </svg>
+      )}
+      {credit && (
+        <p className="pointer-events-none absolute bottom-1 left-2 text-[10px] text-slate-500">
+          {credit}
+        </p>
       )}
       {drawing && (
         <div className="absolute top-3 right-3 flex flex-col divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
