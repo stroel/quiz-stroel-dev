@@ -4,6 +4,7 @@ import QuizResults from '@/components/quiz/QuizResults';
 import QuizRound from '@/components/quiz/QuizRound';
 import QuizSetup, { type ExtraKey } from '@/components/quiz/QuizSetup';
 import { REGIONS, type FlagEntry } from '@/data/flags';
+import { T } from '@/i18n/nl';
 import { shuffle, type FlagSetup as Setup } from '@/lib/flag-pool';
 import { recordResults, type QuestionResult } from '@/lib/history';
 import type { Candidates, Question } from '@/lib/question';
@@ -115,6 +116,7 @@ export default function QuizFlow({
         <QuizResults
           questions={phase.questions}
           results={phase.results}
+          againLabel={T.end.other(unit(2))}
           onRetry={(questions) => start(shuffle(questions))}
           onAgain={() => setPhase({ name: 'setup' })}
         />

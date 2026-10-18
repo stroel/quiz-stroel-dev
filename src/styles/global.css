@@ -30,6 +30,10 @@
 @theme {
   --font-sans: 'Lexend', ui-sans-serif, system-ui, sans-serif;
 
+  /* Content width on a desktop (`max-w-page`). Header and footer bars run the
+     full width; what is inside them lines up with this. */
+  --container-page: 87.5rem;
+
   /* The one accent colour: near-black, as on stroel.dev (buttons slate-900,
      lighter on hover). Buttons, chosen options, progress, focus. "Correct"
      stays emerald and "hint" amber, so the accent is never either. */

@@ -43,27 +43,19 @@ export function nextHint(answer: string, state: HintState, random = Math.random)
 
 export interface MaskCell {
   char: string;
-  kind: 'revealed' | 'typed' | 'empty' | 'fixed';
+  kind: 'revealed' | 'empty' | 'fixed';
 }
 
 /**
- * Lays the typed letters over the mask: revealed letters stay put and typed
- * letters fill the remaining slots from left to right, so the player never
- * has to type a letter that a hint already gave.
+ * The mask a hint shows: revealed letters, empty slots for the rest, and
+ * spaces, hyphens and apostrophes as they are. What the player types stays in
+ * the input and is never poured into the mask (Steve, 18-10-2026): the answer
+ * is always typed in full.
  */
-export function buildMask(answer: string, state: HintState, typed: string): MaskCell[] {
-  const letters = [...typed].filter(isSlot);
-  let next = 0;
+export function buildMask(answer: string, state: HintState): MaskCell[] {
   return [...answer].map((char, index) => {
     if (!isSlot(char)) return { char, kind: 'fixed' };
     if (state.revealed.includes(index)) return { char, kind: 'revealed' };
-    const letter = letters[next];
-    next++;
-    return letter === undefined ? { char: '', kind: 'empty' } : { char: letter, kind: 'typed' };
+    return { char: '', kind: 'empty' };
   });
-}
-
-/** The answer as the mask spells it, for matching alongside the raw input. */
-export function maskText(cells: MaskCell[]): string {
-  return cells.map((cell) => (cell.kind === 'empty' ? '' : cell.char)).join('');
 }

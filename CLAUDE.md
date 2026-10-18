@@ -19,6 +19,7 @@ Twijfel je over architectuur: **stop en vraag het aan Steve**, of kijk in de doc
 - **Layout**: de skill `/quiz-design`: kaders met titelbalk en rijen, de kleuren van stroel.dev (`slate`, zwart als accent via de token `accent`), het STROEL-logo alleen onderaan de startpagina, Lexend zelf gehost in `public/fonts/`, geen donkere modus
 - **Package manager**: pnpm
 - Persoonlijke quiz-app van Steve, publiek maar zonder login. Gemaakt voor de telefoon: elk scherm vult de viewport.
+- De wereldkaart komt uit `world-atlas` en wordt door `src/integrations/map-assets.ts` naar `public/maps/countries.json` geschreven, met onze landcodes als id (gegenereerd, niet in git).
 - Vlaggen komen uit `flag-icons` en worden door `src/integrations/flag-assets.ts` naar `public/flags/` gekopieerd (gegenereerd, niet in git).
 
 ## Bij het begin van een sessie
@@ -131,11 +132,12 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 - Herbruikbare logica staat in `src/lib/`: `matcher.ts` (typfouten), `hints.ts` (masker en letters), `history.ts` en `storage.ts` (localStorage). Een nieuwe quiz hergebruikt die en brengt alleen zijn dataset en schermen mee.
 - Elke quiz is één React-eiland met `client:only="react"`: alles wat het toont hangt af van `localStorage`.
 - Alle teksten staan in `src/i18n/nl.ts`.
+- Woordkeuze: de quizzen op de startpagina (Vlaggen, Hoofdsteden, Landen, …) heten **thema's**, niet categorieën (Steve, 18-10-2026). Gebruik dat woord in UI-teksten en docs.
 
 ### Open punten
 
-- `/landen/` (kaart met world-atlas 50m en d3-geo) en `/spreuken/` staan als "Binnenkort" op de startpagina.
-- Zeeën en rivieren (gevraagd door Steve op 18-10-2026): een eigen categorie met een kaart waarop het gebied duidelijk aangeduid is. Hoort bij dezelfde kaartcomponent als `/landen/`; de data en de opzet liggen nog niet vast.
+- `/landen/` heeft de richting "land aangeduid, naam tikken". De tweede richting, "naam gegeven, tik op de kaart", komt er als keuze **Vraag naar** bij, zoals bij de hoofdsteden (beslissing van Steve, 18-10-2026). `/spreuken/` staat als "Binnenkort" op de startpagina.
+- Zeeën en rivieren (gevraagd door Steve op 18-10-2026): een eigen thema met een kaart waarop het gebied duidelijk aangeduid is. Hoort bij dezelfde kaartcomponent als `/landen/`; de data en de opzet liggen nog niet vast.
 - Land → vlag (raster van 9 of 16 met lookalikes) is nog niet gebouwd.
 - PWA: er zijn alleen meta-tags voor "zet op beginscherm"; een manifest en service worker voor offline gebruik komen later.
 - Er is nog geen testrunner. De matcher is met de hand nagekeken tegen de gevallen in `docs/vlaggen.md`; Vitest toevoegen is een beslissing voor Steve.

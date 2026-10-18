@@ -3,15 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type SubmitEvent 
 import Confetti from '@/components/Confetti';
 import Icon from '@/components/Icon';
 import { T } from '@/i18n/nl';
-import {
-  buildMask,
-  canHint,
-  maskText,
-  nextHint,
-  NO_HINTS,
-  type HintState,
-  type MaskCell,
-} from '@/lib/hints';
+import { buildMask, canHint, nextHint, NO_HINTS, type HintState, type MaskCell } from '@/lib/hints';
 import { flagSrc } from '@/lib/flag-pool';
 import type { QuestionResult } from '@/lib/history';
 import { matchAnswer, normalize } from '@/lib/matcher';
@@ -35,9 +27,15 @@ const CLS = {
   // Fixed width on both ends of a bar, so the progress and timer bars match.
   barLabel: 'flex w-10 shrink-0 text-sm tabular-nums',
   track: 'h-2 flex-1 overflow-hidden rounded-full bg-slate-200',
-  // A large icon above a one-word label, so three of them fit side by side on a phone.
-  action:
-    'inline-flex h-16 flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 text-xs font-semibold tracking-wider text-slate-700 uppercase hover:bg-slate-50 disabled:opacity-40',
+  // Hint and reveal sit beside the input, square like the submit button.
+  square:
+    'inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40',
+  close:
+    'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100',
+  // Shape only: two utilities of one property in a class list fight over the
+  // result, so each confirm button brings its own colours.
+  confirm:
+    'inline-flex h-11 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold',
 };
 
 /**
@@ -141,7 +139,7 @@ export default function QuizRound({
   const question = questions[index]!;
   const expected = candidates.find((candidate) => candidate.id === question.id)!;
   const answer = question.answer;
-  const cells = useMemo(() => buildMask(answer, hint, input), [answer, hint, input]);
+  const cells = useMemo(() => buildMask(answer, hint), [answer, hint]);
   const done = status === 'correct' || status === 'revealed';
 
   useEffect(() => {
@@ -155,6 +153,22 @@ export default function QuizRound({
     },
     [],
   );
+
+  // With a hardware keyboard, typing always lands in the answer: a letter typed
+  // while a button or the map has focus moves focus to the input first, and
+  // the browser then puts the letter there. Touch keyboards only appear for the
+  // input itself, so on a phone this never fires.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const field = inputRef.current;
+      if (!field || document.activeElement === field) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.key.length !== 1 && event.key !== 'Backspace') return;
+      field.focus();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   // The clock restarts per question only; a wrong answer or a hint does not reset it.
   useEffect(() => {
@@ -218,12 +232,9 @@ export default function QuizRound({
     }
     if (normalize(input) === '') return;
 
-    const attempts = hint.level > 0 ? [input, maskText(cells)] : [input];
-    const match = attempts
-      .map((attempt) => matchAnswer(attempt, expected, candidates))
-      .find((result) => result.correct);
+    const match = matchAnswer(input, expected, candidates);
 
-    if (!match) {
+    if (!match.correct) {
       setStatus('wrong');
       setWrongTries(wrongTries + 1);
       setShakeKey(shakeKey + 1);
@@ -244,11 +255,8 @@ export default function QuizRound({
   }
 
   function takeHint() {
-    // A rejected answer would otherwise be poured into the fresh mask.
-    if (status === 'wrong') {
-      setInput('');
-      setStatus('asking');
-    }
+    // The answer stays in the input; only the red "wrong" state goes.
+    if (status === 'wrong') setStatus('asking');
     setHint(nextHint(answer, hint));
     inputRef.current?.focus();
   }
@@ -299,32 +307,60 @@ export default function QuizRound({
 
   return (
     <div
-      className="relative mx-auto flex h-dvh max-w-xl flex-col overflow-hidden bg-white"
+      className="relative flex h-dvh flex-col overflow-hidden bg-white"
       style={height === null ? undefined : { height: `${height}px` }}
     >
       {/* Both bars share the same columns, so they line up and are equally wide. */}
-      <header className="flex flex-col gap-4 px-4 pt-5">
-        <div
-          className="flex items-center gap-3"
-          role="progressbar"
-          aria-label={T.quiz.progress(index + 1, questions.length)}
-          aria-valuemin={1}
-          aria-valuemax={questions.length}
-          aria-valuenow={index + 1}
-        >
-          <span className={`${CLS.barLabel} justify-start font-semibold text-slate-900`}>
-            {index + 1}
-          </span>
-          <div className={CLS.track}>
-            <div
-              className="bg-accent-700 h-full rounded-full transition-[width] duration-300"
-              style={{ width: `${(index / questions.length) * 100}%` }}
-            />
+      <header className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pt-5">
+        {confirmingStop ? (
+          // "Ja, stop" sits where the close button was; a tap within STOP_GUARD_MS of
+          // opening is ignored, so a double tap does not end the round by accident.
+          <div className="flex h-11 items-center justify-end gap-2">
+            <p className="mr-1 font-semibold">{T.quiz.confirmStop}</p>
+            <button
+              type="button"
+              onClick={cancelStop}
+              className={`${CLS.confirm} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+            >
+              {T.quiz.keepPlaying}
+            </button>
+            <button
+              type="button"
+              onClick={confirmStop}
+              className={`${CLS.confirm} bg-rose-600 text-white hover:bg-rose-700`}
+            >
+              <Icon name="x" className="h-4 w-4" />
+              {T.quiz.stopConfirmed}
+            </button>
           </div>
-          <span className={`${CLS.barLabel} justify-end font-medium text-slate-500`}>
-            {questions.length}
-          </span>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div
+              className="flex flex-1 items-center gap-3"
+              role="progressbar"
+              aria-label={T.quiz.progress(index + 1, questions.length)}
+              aria-valuemin={1}
+              aria-valuemax={questions.length}
+              aria-valuenow={index + 1}
+            >
+              <span className={`${CLS.barLabel} justify-start font-semibold text-slate-900`}>
+                {index + 1}
+              </span>
+              <div className={CLS.track}>
+                <div
+                  className="bg-accent-700 h-full rounded-full transition-[width] duration-300"
+                  style={{ width: `${(index / questions.length) * 100}%` }}
+                />
+              </div>
+              <span className={`${CLS.barLabel} justify-end font-medium text-slate-500`}>
+                {questions.length}
+              </span>
+            </div>
+            <button type="button" onClick={askStop} aria-label={T.quiz.stop} className={CLS.close}>
+              <Icon name="x" className="h-6 w-6" />
+            </button>
+          </div>
+        )}
 
         {timeLimit !== null && (
           <div className="flex items-center gap-3">
@@ -347,39 +383,67 @@ export default function QuizRound({
             >
               {T.quiz.secondsLeft(Math.ceil(remainingMs / 1000))}
             </span>
+            {/* Room for the close button above, so both bars end at the same place. */}
+            <span className="w-11 shrink-0" />
           </div>
         )}
       </header>
 
-      <div className="mt-5 flex min-h-0 flex-1 flex-col items-center justify-center gap-4 border-y border-slate-200 bg-slate-50 p-6">
+      <div className="relative mt-5 flex min-h-0 flex-1 flex-col items-center justify-center gap-4 border-y border-slate-200 bg-slate-50 p-6">
         {prompt(question)}
         {done && question.note && (
           <p className="max-w-sm text-center text-sm text-slate-600">{question.note}</p>
         )}
       </div>
 
-      <div className="relative flex flex-col gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {/* Feedback floats as a tooltip just above this panel, so it takes no room of its own. */}
-        <div
-          className="pointer-events-none absolute inset-x-4 bottom-full mb-3 flex justify-center"
-          aria-live="polite"
-        >
-          {feedback && (
-            <p
-              className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-center font-semibold shadow-md ${feedback.tone}`}
-            >
-              <Icon name={feedback.icon} className="h-5 w-5 shrink-0" />
-              {feedback.text}
-              <span
-                className={`absolute top-full left-1/2 -mt-1.5 h-3 w-3 -translate-x-1/2 rotate-45 ${feedback.tone}`}
-              />
-            </p>
+      <div className="relative mx-auto flex w-full max-w-xl flex-col gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {/* Feedback and the hint mask float just above this panel, so neither makes it
+            taller: the mask in a white pill, the feedback as a tooltip above that. */}
+        <div className="pointer-events-none absolute inset-x-4 bottom-full mb-3 flex flex-col items-center gap-3">
+          <div aria-live="polite">
+            {feedback && (
+              <p
+                className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-center font-semibold shadow-md ${feedback.tone}`}
+              >
+                <Icon name={feedback.icon} className="h-5 w-5 shrink-0" />
+                {feedback.text}
+                <span
+                  className={`absolute top-full left-1/2 -mt-1.5 h-3 w-3 -translate-x-1/2 rotate-45 ${feedback.tone}`}
+                />
+              </p>
+            )}
+          </div>
+          {hint.level > 0 && !done && (
+            <div className="rounded-[1.75rem] bg-white px-5 pt-1.5 pb-2.5 shadow-md ring-1 ring-slate-200">
+              <Mask cells={cells} />
+            </div>
           )}
         </div>
 
-        {hint.level > 0 && !done && <Mask cells={cells} />}
-
         <form onSubmit={submit} className="flex gap-2">
+          <button
+            type="button"
+            onClick={reveal}
+            disabled={done}
+            aria-label={T.quiz.revealLabel}
+            className={CLS.square}
+          >
+            <Icon name="eye" className="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            onClick={takeHint}
+            disabled={done || !canHint(answer, hint)}
+            aria-label={T.quiz.hint}
+            className={`${CLS.square} relative`}
+          >
+            <Icon name="lightbulb" className="h-6 w-6 text-amber-600" />
+            {hint.level > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-xs font-semibold text-white tabular-nums">
+                {hint.level}
+              </span>
+            )}
+          </button>
           <input
             key={shakeKey}
             ref={inputRef}
@@ -398,7 +462,7 @@ export default function QuizRound({
             data-lpignore="true"
             enterKeyHint={done ? 'next' : 'go'}
             readOnly={done}
-            className={`h-14 min-w-0 flex-1 rounded-xl border-2 bg-white px-4 text-xl placeholder:text-slate-400 focus:outline-none ${
+            className={`h-14 min-w-0 flex-1 rounded-xl border-2 bg-white px-3 text-xl uppercase placeholder:text-base placeholder:text-slate-400 placeholder:normal-case focus:outline-none ${
               status === 'wrong'
                 ? 'animate-shake border-rose-600'
                 : status === 'correct'
@@ -414,53 +478,6 @@ export default function QuizRound({
             <Icon name={done ? 'arrow-right' : 'corner-down-left'} className="h-6 w-6" />
           </button>
         </form>
-
-        {confirmingStop ? (
-          // "Ja, stop" takes the place of "Stop"; a tap within STOP_GUARD_MS of opening is
-          // ignored, so a double tap does not end the round by accident.
-          <div className="grid grid-cols-3 gap-2">
-            <p className="flex h-16 items-center justify-center text-center text-sm font-semibold">
-              {T.quiz.confirmStop}
-            </p>
-            <button type="button" onClick={cancelStop} className={CLS.action}>
-              <Icon name="arrow-left" className="h-6 w-6" />
-              {T.quiz.keepPlaying}
-            </button>
-            <button
-              type="button"
-              onClick={confirmStop}
-              className="inline-flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-rose-600 text-xs font-semibold tracking-wider text-white uppercase hover:bg-rose-700"
-            >
-              <Icon name="x" className="h-6 w-6" />
-              {T.quiz.stopConfirmed}
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={takeHint}
-              disabled={done || !canHint(answer, hint)}
-              className={CLS.action}
-            >
-              <Icon name="lightbulb" className="h-6 w-6 text-amber-600" />
-              <span>
-                {T.quiz.hint}
-                {hint.level > 0 && (
-                  <span className="ml-1 tabular-nums opacity-70">{hint.level}</span>
-                )}
-              </span>
-            </button>
-            <button type="button" onClick={reveal} disabled={done} className={CLS.action}>
-              <Icon name="eye" className="h-6 w-6" />
-              {T.quiz.reveal}
-            </button>
-            <button type="button" onClick={askStop} className={CLS.action}>
-              <Icon name="x" className="h-6 w-6" />
-              {T.quiz.stop}
-            </button>
-          </div>
-        )}
       </div>
 
       <Confetti burst={burst} />

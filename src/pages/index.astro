@@ -8,7 +8,7 @@ import Base from '@/layouts/Base.astro';
 const quizzes = [
   { href: '/vlaggen/', icon: 'flag', ...T.quizzes.vlaggen, ready: true },
   { href: '/hoofdsteden/', icon: 'landmark', ...T.quizzes.hoofdsteden, ready: true },
-  { href: '/landen/', icon: 'map', ...T.quizzes.landen, ready: false },
+  { href: '/landen/', icon: 'map', ...T.quizzes.landen, ready: true },
   { href: '/spreuken/', icon: 'quote', ...T.quizzes.spreuken, ready: false },
 ];
 const ready = quizzes.filter((quiz) => quiz.ready);
@@ -16,13 +16,18 @@ const soon = quizzes.filter((quiz) => !quiz.ready);
 ---
 
 <Base title={T.site.title}>
-  <div class="mx-auto flex min-h-dvh max-w-xl flex-col">
-    <header class="border-b border-slate-200 bg-white px-4 pt-12 pb-5">
-      <h1 class="text-4xl font-bold tracking-tight">{T.site.title}</h1>
-      <p class="mt-1 text-slate-500">{T.site.tagline}</p>
+  <div class="flex min-h-dvh flex-col">
+    <header class="border-b border-slate-200 bg-white">
+      {/* As tall as the header of a quiz (py-3 around an h-11 row), so the pages line up. */}
+      <div class="max-w-page mx-auto flex items-center gap-3 px-4 py-3">
+        <h1 class="flex h-11 shrink-0 items-center text-2xl font-bold tracking-tight">
+          {T.site.title}
+        </h1>
+        <p class="truncate text-slate-500">{T.site.tagline}</p>
+      </div>
     </header>
 
-    <main class="flex flex-col gap-4 p-4">
+    <main class="max-w-page mx-auto grid w-full gap-4 p-4 md:grid-cols-2">
       <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <h2 class="flex min-h-10 items-center border-b border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-600">
           {T.site.play}

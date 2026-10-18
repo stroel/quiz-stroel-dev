@@ -3,6 +3,7 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
 import { flagAssets } from './src/integrations/flag-assets.ts';
+import { mapAssets } from './src/integrations/map-assets.ts';
 import { minifyOutput } from './src/integrations/minify-output.ts';
 
 const isDev = process.argv.includes('dev');
@@ -12,7 +13,7 @@ const isDev = process.argv.includes('dev');
 export default defineConfig({
   site: 'https://quiz.stroel.dev',
   trailingSlash: 'always',
-  integrations: [flagAssets(), react(), minifyOutput()],
+  integrations: [flagAssets(), mapAssets(), react(), minifyOutput()],
   vite: {
     plugins: [tailwindcss()],
     // `astro check` re-runs the dep optimizer and would overwrite a running dev

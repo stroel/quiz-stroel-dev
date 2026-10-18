@@ -134,55 +134,59 @@ export default function QuizSetup({
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
-      <header className="flex items-center gap-2 border-b border-slate-200 bg-white px-2 py-3">
-        <a
-          href="/"
-          aria-label={T.site.home}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
-        >
-          <Icon name="arrow-left" />
-        </a>
-        <h1 className="flex-1 text-2xl font-bold tracking-tight">{title}</h1>
-        {overview && (
+    <div className="flex min-h-dvh flex-col">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="max-w-page mx-auto flex items-center gap-2 px-2 py-3">
           <a
-            href={overview}
-            className="inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            href="/"
+            aria-label={T.site.home}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
           >
-            <Icon name="book-open" />
-            {T.overview.open}
+            <Icon name="arrow-left" />
           </a>
-        )}
+          <h1 className="flex-1 text-2xl font-bold tracking-tight">{title}</h1>
+          {overview && (
+            <a
+              href={overview}
+              className="inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              <Icon name="book-open" />
+              {T.overview.open}
+            </a>
+          )}
+        </div>
       </header>
 
-      <main className="flex flex-1 flex-col gap-4 p-4 pb-32">
-        {before}
-
-        <Panel
-          title={T.setup.regions}
-          action={
-            <button
-              type="button"
-              onClick={() => setSetup((s) => ({ ...s, regions: allRegions ? [] : [...REGIONS] }))}
-              className="text-accent-800 -mr-2 h-10 px-2 text-sm font-semibold"
-            >
-              {allRegions ? T.setup.none : T.setup.all}
-            </button>
-          }
-        >
-          <ul className="divide-y divide-slate-200">
-            {REGIONS.map((region) => (
-              <CheckRow
-                key={region}
-                on={setup.regions.includes(region)}
-                label={T.regions[region]}
-                count={regionCounts[region] ?? 0}
-                onClick={() => toggleRegion(region)}
-              />
-            ))}
-          </ul>
-        </Panel>
-
+      <main className="max-w-page mx-auto grid w-full flex-1 content-start items-start gap-4 p-4 pb-32 md:grid-cols-2 xl:grid-cols-3">
+        {/* Fixed columns, whatever a quiz adds: its own panel and the regions,
+            then the extras, then the round. On two columns the round wraps below. */}
+        <div className="flex flex-col gap-4">
+          {before}
+          <Panel
+            title={T.setup.regions}
+            action={
+              <button
+                type="button"
+                onClick={() => setSetup((s) => ({ ...s, regions: allRegions ? [] : [...REGIONS] }))}
+                className="text-accent-800 -mr-2 h-10 px-2 text-sm font-semibold"
+              >
+                {allRegions ? T.setup.none : T.setup.all}
+              </button>
+            }
+          >
+            <ul className="divide-y divide-slate-200">
+              {REGIONS.map((region) => (
+                <CheckRow
+                  key={region}
+                  on={setup.regions.includes(region)}
+                  label={T.regions[region]}
+                  count={regionCounts[region] ?? 0}
+                  onClick={() => toggleRegion(region)}
+                />
+              ))}
+            </ul>
+          </Panel>
+        </div>
         <Panel title={T.setup.extra}>
           <ul className="divide-y divide-slate-200">
             {EXTRAS.filter(({ key }) => extras.includes(key)).map(({ key, examples }) => (
@@ -196,7 +200,6 @@ export default function QuizSetup({
             ))}
           </ul>
         </Panel>
-
         <Panel title={T.setup.round}>
           <div className="grid grid-cols-2 gap-px bg-slate-200">
             <div className="flex flex-col gap-1 bg-white px-3 py-2">
@@ -237,19 +240,23 @@ export default function QuizSetup({
         </Panel>
       </main>
 
-      <footer className="fixed inset-x-0 bottom-0 mx-auto max-w-xl border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
-        {available === 0 ? (
-          <p className="flex h-14 items-center justify-center text-slate-500">{T.setup.empty}</p>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onStart({ ...setup, count, timer })}
-            className="bg-accent-800 hover:bg-accent-900 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-lg font-semibold text-white"
-          >
-            <Icon name="play" />
-            {T.setup.start(playing, unit(playing))}
-          </button>
-        )}
+      <footer className="fixed inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+        <div className="max-w-page mx-auto flex justify-end">
+          {available === 0 ? (
+            <p className="flex h-14 w-full items-center justify-center text-slate-500 md:w-auto">
+              {T.setup.empty}
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onStart({ ...setup, count, timer })}
+              className="bg-accent-800 hover:bg-accent-900 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-lg font-semibold text-white md:w-96"
+            >
+              <Icon name="play" />
+              {T.setup.start(playing, unit(playing))}
+            </button>
+          )}
+        </div>
       </footer>
     </div>
   );

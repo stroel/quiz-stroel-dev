@@ -8,7 +8,8 @@ startpagina laat je een quiz kiezen:
   zonder punten. Zie [`docs/vlaggen.md`](docs/vlaggen.md).
 - **Hoofdsteden** (`/hoofdsteden/`): je ziet een land en tikt de hoofdstad, of omgekeerd. Zie
   [`docs/hoofdsteden.md`](docs/hoofdsteden.md).
-- **Landen** (`/landen/`): kaartquiz. Binnenkort.
+- **Landen** (`/landen/`): een land is ingekleurd op de kaart en je tikt de naam. Zie
+  [`docs/landen.md`](docs/landen.md).
 - **Spreuken** (`/spreuken/`): wie zei het? Binnenkort.
 
 Elke quiz heeft een **Overzicht** (`/vlaggen/overzicht/`, `/hoofdsteden/overzicht/`) met alle
@@ -25,6 +26,9 @@ Er is geen backend. Je instellingen en historiek staan in `localStorage` van het
 | React | 19.3.1 | UI van de quizzen |
 | Tailwind CSS | 4.3.3 | Styling |
 | flag-icons | 7.6.0 | Vlaggen als SVG |
+| d3-geo | 3.1.1 | Projectie en tekenen van de kaart |
+| topojson-client | 3.1.0 | Kaartdata uitpakken |
+| world-atlas | 2.0.2 | Landgrenzen (Natural Earth 1:50m) |
 | wrangler | 4.151.1 | Deploy naar Cloudflare |
 
 ## Lokaal draaien

@@ -22,3 +22,6 @@ dist/
 
 # Copied from flag-icons by src/integrations/flag-assets.ts
 public/flags/
+
+# Written from world-atlas by src/integrations/map-assets.ts
+public/maps/
