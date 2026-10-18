@@ -40,14 +40,20 @@ omdat ze op deze schaal geen vorm hebben: Tuvalu, Gibraltar en Tokelau. Zo blijv
 - **Grootte**: de kaart vult het hele vlak van de vraag, op telefoon en desktop, en wordt
   opnieuw getekend als dat vlak van grootte verandert (toetsenbord, draaien). De cirkel rond het
   land past in de kortste zijde; een breed scherm toont meer van de streek ernaast.
-- **Zoomen**: rechtsboven staan **+** en **−**; op desktop werkt ook het muiswiel, op de
-  telefoon knijpen met twee vingers. Zoomen maakt de cirkel rond het land per stap 1,6 keer kleiner
-  of groter, van 0,5° (een microstaat van dichtbij) tot een half halfrond (90°). Elke vraag begint
-  weer op de standaardzoom. Verschuiven kan niet: het land blijft altijd in het midden.
+- **Bewegen**: dezelfde aardbol als de tikkaart (`src/components/countries/globe.ts`). Slepen
+  draait de bol; rechtsboven staan **+** en **−**, op desktop werkt ook het muiswiel, op de
+  telefoon knijpen met twee vingers. Zoomen maakt de cirkel per stap 1,6 keer kleiner of groter,
+  van 0,5° (een microstaat van dichtbij) tot een half halfrond (90°). Elke vraag begint weer
+  gecentreerd op het land. Ben je weggedraaid of gezoomd, dan verschijnt onder **−** een knop
+  (`locate-fixed`) die terugkeert naar het begin.
+  Tot 18 oktober 2026 kon je hier niet verschuiven en bleef het land in het midden; Steve wou
+  dezelfde draaiende aarde als bij **De plaats**.
 - **Kleine landen**: is het land op de kaart kleiner dan 60 px², dan krijgt het een ring
   (Malta, Monaco, de Caraïbische eilanden).
 - **Kleuren**: zee `sky-100`, land wit met grenzen in `slate-300`, het land om te raden in de
-  accentkleur.
+  accentkleur. Rond de bol is het vlak grijs (`slate-50`) en de bol heeft een rand in
+  `slate-300`, met lengte- en breedtegraden om de 10° in `sky-200`: zo lees je hem als een aarde
+  die draait, niet als een platte kaart (Steve, 18-10-2026: "Ik zie de wereldbol niet").
 
 Lukt het laden van de kaart niet, dan blijft het vlak leeg en meldt de console waarom. Hints en
 **Toon** werken nog.
@@ -60,7 +66,8 @@ van het invulveld staat de naam van het land, en de pijl is pas te gebruiken na 
 - **Start**: de kaart opent op de regio van het land (Europa, Azië, …, de eerste regio uit
   `flags.ts`), zodat er op een telefoon land groot genoeg is om te raken. Welke regio het is, is
   het enige wat de kaart verklapt.
-- **Bewegen**: slepen verschuift, knijpen, scrollen of **+** en **−** zoomen. Een druk die minder
+- **Bewegen**: slepen draait de bol, knijpen, scrollen of **+** en **−** zoomen
+  (`src/components/countries/globe.ts`, gedeeld met de kaart van **De naam**). Een druk die minder
   dan 8 px beweegt, telt als tik.
 - **Tikken**: elk land is een doel. Is een land op het scherm kleiner dan 80 px², dan krijgt het
   ook een witte stip om op te tikken. Fout getikt: het land kleurt rood en de melding zegt welk land

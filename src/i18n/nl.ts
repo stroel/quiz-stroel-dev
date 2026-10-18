@@ -92,6 +92,7 @@ export const T = {
   countries: {
     mapLabel: 'Kaart met het land om te raden',
     tapMapLabel: 'Kaart: tik op het land',
+    recentre: 'Terug naar het begin',
     direction: 'Vraag naar',
     toName: 'De naam',
     toNameDetail: 'Een land is aangeduid, je tikt de naam.',

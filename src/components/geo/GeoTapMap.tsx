@@ -2,7 +2,8 @@ import { geoCentroid } from 'd3-geo';
 import type { FeatureCollection } from 'geojson';
 import { useMemo } from 'react';
 
-import TapMap, { REGION_VIEW, type TapShape, type View } from '@/components/countries/TapMap';
+import type { View } from '@/components/countries/globe';
+import TapMap, { REGION_VIEW, type TapShape } from '@/components/countries/TapMap';
 import { radiusAround } from '@/components/countries/world';
 import { KIND, useGeo } from '@/components/geo/GeoMap';
 import type { TapState } from '@/components/quiz/QuizRound';

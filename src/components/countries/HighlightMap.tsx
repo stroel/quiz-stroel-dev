@@ -1,12 +1,17 @@
-import { geoAzimuthalEqualArea, geoCentroid, geoCircle, geoPath } from 'd3-geo';
+import { geoCentroid, geoGraticule10, geoPath } from 'd3-geo';
 import type { FeatureCollection } from 'geojson';
-import { useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useMemo } from 'react';
 
-import { clamp, radiusAround, useSize, useWorld } from '@/components/countries/world';
+import { useGlobe, type View } from '@/components/countries/globe';
+import { radiusAround, useSize, useWorld } from '@/components/countries/world';
 import Icon from '@/components/Icon';
 import { T } from '@/i18n/nl';
 
 // Room between the context circle and the edge of the stage, in px.
+// Meridians and parallels every 10°: without them a turning globe reads as a
+// flat map sliding by.
+const GRATICULE = geoGraticule10();
+
 const PADDING = 16;
 
 // How much of the surroundings to show: a circle around the target this many
@@ -14,12 +19,6 @@ const PADDING = 16;
 // would fill the screen and show nothing around it) or wider than MAX_RADIUS.
 const CONTEXT = 2.2;
 const MAX_RADIUS = 70;
-
-// Zooming scales that circle: each step of + or − (or wheel notch) by this
-// factor, from a close look at a microstate out to a whole hemisphere.
-const ZOOM_STEP = 1.6;
-const ZOOM_MIN_RADIUS = 0.5;
-const ZOOM_MAX_RADIUS = 90;
 
 // Below this projected area (px²) a country gets a ring, or Monaco and Nauru
 // would be a dot nobody sees. Only for `land`: a sea or range is never that small.
@@ -30,11 +29,11 @@ const RING_RADIUS = 16;
 export type HighlightKind = 'land' | 'sea' | 'line' | 'area';
 
 /**
- * The world around one thing on the map, with that thing highlighted. An
- * azimuthal projection centred on it keeps it undistorted wherever it lies,
- * Greenland and New Zealand included. The map fills the whole stage: the
- * context circle fits the shorter side, a wide screen shows more around it.
- * Zoom with + and −, the wheel, or two fingers.
+ * The world around one thing on the map, with that thing highlighted. The map
+ * starts centred on it and fills the whole stage: the context circle fits the
+ * shorter side, a wide screen shows more around it. It is the same globe as the
+ * tap map: drag to turn it, zoom with + and −, the wheel or two fingers, and the
+ * locate button brings the target back to the middle.
  */
 export default function HighlightMap({
   target,
@@ -60,41 +59,28 @@ export default function HighlightMap({
 }) {
   const countries = useWorld();
   const [ref, size] = useSize<HTMLDivElement>();
-  // Zoom level in steps; fractional while pinching. The quiz remounts the map
-  // per question, so every question starts at 0.
-  const [zoom, setZoom] = useState(0);
-  const pinch = useRef<{ pointers: Map<number, [number, number]>; start: number; zoom: number }>({
-    pointers: new Map(),
-    start: 0,
-    zoom: 0,
-  });
+
+  // The quiz remounts the map per question, so every question starts here.
+  const start = useMemo<View | null>(() => {
+    if (!target || target.features.length === 0) return null;
+    const centre = geoCentroid(target);
+    return {
+      centre,
+      radius: Math.min(MAX_RADIUS, Math.max(minRadius, radiusAround(target, centre) * CONTEXT)),
+    };
+  }, [target, minRadius]);
+
+  const globe = useGlobe({ start, size, padding: PADDING });
+  const { projection } = globe;
 
   const drawing = useMemo(() => {
-    if (!countries || !target || !size || size.width === 0 || size.height === 0) return null;
-    if (target.features.length === 0) return null;
-
-    const centre = geoCentroid(target);
-    const fitted = Math.min(
-      MAX_RADIUS,
-      Math.max(minRadius, radiusAround(target, centre) * CONTEXT),
-    );
-    const radius = clamp(fitted / ZOOM_STEP ** zoom, ZOOM_MIN_RADIUS, ZOOM_MAX_RADIUS);
-    const projection = geoAzimuthalEqualArea()
-      .rotate([-centre[0], -centre[1]])
-      .clipAngle(90)
-      .fitExtent(
-        [
-          [PADDING, PADDING],
-          [size.width - PADDING, size.height - PADDING],
-        ],
-        geoCircle().center(centre).radius(radius)(),
-      );
+    if (!countries || !target || !start || !projection) return null;
     const path = geoPath(projection);
-
     const area = path.area(target);
-    const point = projection(centre);
+    const point = projection(start.centre);
     return {
       sea: path({ type: 'Sphere' }) ?? '',
+      graticule: path(GRATICULE) ?? '',
       land: countries
         .filter((country) => !exclude || country.id !== exclude)
         .map((country) => path(country) ?? '')
@@ -102,46 +88,11 @@ export default function HighlightMap({
       target: path(target) ?? '',
       rivers: rivers ? (path(rivers) ?? '') : '',
       ring: kind === 'land' && area < TINY_AREA && point ? point : null,
-      // The zoom steps between the closest and the widest view, for this country.
-      zoomIn: Math.log(fitted / ZOOM_MIN_RADIUS) / Math.log(ZOOM_STEP),
-      zoomOut: Math.log(fitted / ZOOM_MAX_RADIUS) / Math.log(ZOOM_STEP),
     };
-  }, [countries, target, exclude, kind, minRadius, rivers, size, zoom]);
+  }, [countries, target, start, exclude, kind, rivers, projection]);
 
-  // Functional updates: two taps before a re-render must both count.
-  function zoomTo(next: (current: number) => number) {
-    if (!drawing) return;
-    const { zoomIn, zoomOut } = drawing;
-    setZoom((current) => clamp(next(current), zoomOut, zoomIn));
-  }
-
-  function distance(points: [number, number][]): number {
-    const [a, b] = points;
-    return a && b ? Math.hypot(a[0] - b[0], a[1] - b[1]) : 0;
-  }
-
-  // Two fingers pinch the zoom; one finger does nothing, so the page stays calm.
-  function onPointer(event: PointerEvent<HTMLDivElement>) {
-    const state = pinch.current;
-    if (event.type === 'pointerdown')
-      state.pointers.set(event.pointerId, [event.clientX, event.clientY]);
-    else if (event.type === 'pointermove' && state.pointers.has(event.pointerId))
-      state.pointers.set(event.pointerId, [event.clientX, event.clientY]);
-    else state.pointers.delete(event.pointerId);
-
-    const points = [...state.pointers.values()];
-    if (points.length !== 2) {
-      state.start = 0;
-      return;
-    }
-    if (state.start === 0) {
-      state.start = distance(points);
-      state.zoom = zoom;
-      return;
-    }
-    const ratio = distance(points) / state.start;
-    if (ratio > 0) zoomTo(() => state.zoom + Math.log(ratio) / Math.log(ZOOM_STEP));
-  }
+  // Turned or zoomed away from where the question started.
+  const moved = !!start && !!globe.view && globe.view !== start;
 
   const zoomButton =
     'inline-flex h-11 w-11 items-center justify-center text-slate-700 hover:bg-slate-50 disabled:opacity-30';
@@ -149,12 +100,8 @@ export default function HighlightMap({
   return (
     <div
       ref={ref}
-      className="absolute inset-0 touch-none bg-sky-100"
-      onWheel={(event) => zoomTo((current) => current + (event.deltaY < 0 ? 0.5 : -0.5))}
-      onPointerDown={onPointer}
-      onPointerMove={onPointer}
-      onPointerUp={onPointer}
-      onPointerCancel={onPointer}
+      className="absolute inset-0 cursor-grab touch-none bg-slate-50 select-none active:cursor-grabbing"
+      {...globe.handlers}
     >
       {drawing && size && (
         <svg
@@ -168,6 +115,7 @@ export default function HighlightMap({
           <path d={drawing.sea} className="fill-sky-100" />
           {/* A sea lies under the land, so the coast cuts it out. */}
           {kind === 'sea' && <path d={drawing.target} className="fill-accent-800/80" />}
+          <path d={drawing.graticule} className="fill-none stroke-sky-200" strokeWidth={0.75} />
           <path d={drawing.land} className="fill-white stroke-slate-300" strokeWidth={0.75} />
           {drawing.rivers && (
             <path
@@ -211,6 +159,8 @@ export default function HighlightMap({
               />
             </>
           )}
+          {/* The edge of the globe, over everything, so the far side reads as space. */}
+          <path d={drawing.sea} className="fill-none stroke-slate-300" strokeWidth={1} />
           {drawing.ring && (
             <circle
               cx={drawing.ring[0]}
@@ -232,8 +182,9 @@ export default function HighlightMap({
           <button
             type="button"
             aria-label={T.countries.zoomIn}
-            disabled={zoom >= drawing.zoomIn}
-            onClick={() => zoomTo((current) => Math.round(current) + 1)}
+            disabled={!globe.canZoomIn}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => globe.zoom(1)}
             className={zoomButton}
           >
             <Icon name="plus" />
@@ -241,12 +192,24 @@ export default function HighlightMap({
           <button
             type="button"
             aria-label={T.countries.zoomOut}
-            disabled={zoom <= drawing.zoomOut}
-            onClick={() => zoomTo((current) => Math.round(current) - 1)}
+            disabled={!globe.canZoomOut}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => globe.zoom(-1)}
             className={zoomButton}
           >
             <Icon name="minus" />
           </button>
+          {moved && (
+            <button
+              type="button"
+              aria-label={T.countries.recentre}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => globe.setView(start)}
+              className={zoomButton}
+            >
+              <Icon name="locate-fixed" />
+            </button>
+          )}
         </div>
       )}
     </div>
