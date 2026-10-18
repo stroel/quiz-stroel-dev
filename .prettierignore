@@ -1,0 +1,2 @@
+# No exclusions — all src files are Prettier-formatted.
+# (format scripts target src/ explicitly, so build output is never touched.)

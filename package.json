@@ -1,0 +1,58 @@
+{
+  "name": "quiz-stroel-dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler dev",
+    "deploy": "astro build && wrangler deploy",
+    "typecheck": "node -e \"import('@astrojs/check').catch((error) => { console.error('@astrojs/check failed to load, so astro check would skip silently and exit 0:', error); process.exit(1); })\" && astro check",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,astro}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,astro}\"",
+    "astro": "astro"
+  },
+  "pnpm": {
+    "overrides": {
+      "@emnapi/core": "^1.11.3",
+      "@emnapi/runtime": "^1.11.3"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
+  },
+  "dependencies": {
+    "@astrojs/react": "^7.1.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.4.0",
+    "flag-icons": "^7.6.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@eslint/js": "^10.0.1",
+    "@swc/html": "^1.16.18",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^10.13.0",
+    "eslint-plugin-astro": "^3.2.1",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.1",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "wrangler": "^4.151.1"
+  }
+}

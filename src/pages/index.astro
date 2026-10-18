@@ -1,0 +1,59 @@
+---
+// Start page: pick a quiz. Quizzes that are planned but not built yet are
+// listed as "Binnenkort" so the start page already has its final shape.
+import Icon from '@/components/Icon.astro';
+import { T } from '@/i18n/nl';
+import Base from '@/layouts/Base.astro';
+
+const quizzes = [
+  { href: '/vlaggen/', icon: 'flag', ...T.quizzes.vlaggen, ready: true },
+  { href: '/landen/', icon: 'map', ...T.quizzes.landen, ready: false },
+  { href: '/spreuken/', icon: 'quote', ...T.quizzes.spreuken, ready: false },
+];
+---
+
+<Base title={T.site.title}>
+  <main class="mx-auto flex min-h-dvh max-w-xl flex-col gap-8 px-4 pt-12 pb-8">
+    <header class="flex flex-col gap-2">
+      <h1 class="text-4xl font-bold tracking-tight">{T.site.title}</h1>
+      <p class="text-lg text-slate-500 dark:text-slate-400">{T.site.tagline}</p>
+    </header>
+
+    <ul class="flex flex-col gap-3">
+      {quizzes.map((quiz) =>
+        quiz.ready ? (
+          <li>
+            <a
+              href={quiz.href}
+              class="flex items-center gap-4 rounded-2xl bg-white p-5 ring-1 ring-slate-200 transition hover:ring-slate-400 dark:bg-slate-800 dark:ring-slate-700 dark:hover:ring-slate-500"
+            >
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                <Icon name={quiz.icon} class="h-6 w-6" />
+              </span>
+              <span class="flex flex-1 flex-col">
+                <span class="text-xl font-semibold">{quiz.title}</span>
+                <span class="text-slate-500 dark:text-slate-400">{quiz.description}</span>
+              </span>
+              <Icon name="arrow-right" class="h-5 w-5 text-slate-400" />
+            </a>
+          </li>
+        ) : (
+          <li class="flex items-center gap-4 rounded-2xl p-5 ring-1 ring-slate-200 ring-dashed dark:ring-slate-700">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <Icon name={quiz.icon} class="h-6 w-6" />
+            </span>
+            <span class="flex flex-1 flex-col">
+              <span class="text-xl font-semibold text-slate-500 dark:text-slate-400">
+                {quiz.title}
+              </span>
+              <span class="text-slate-400 dark:text-slate-500">{quiz.description}</span>
+            </span>
+            <span class="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              {T.site.soon}
+            </span>
+          </li>
+        ),
+      )}
+    </ul>
+  </main>
+</Base>

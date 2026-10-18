@@ -1,0 +1,47 @@
+---
+// Shell for every page. Built for phones first: the viewport follows the
+// keyboard (`interactive-widget`), the page may run under the notch
+// (`viewport-fit`), and when added to the home screen it opens without
+// browser chrome.
+import '@/styles/global.css';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Quiz" />
+    <link rel="icon" type="image/svg+xml" href="https://stroel.dev/favicon.svg" />
+    <title>{title}</title>
+
+    <script is:inline>
+      // Follow the system theme before paint, so there is no flash.
+      (function () {
+        try {
+          document.documentElement.classList.toggle(
+            'dark',
+            window.matchMedia('(prefers-color-scheme: dark)').matches,
+          );
+        } catch {
+          /* matchMedia unavailable — stay light */
+        }
+      })();
+    </script>
+  </head>
+
+  <body class="min-h-dvh bg-slate-50 font-sans text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <slot />
+  </body>
+</html>

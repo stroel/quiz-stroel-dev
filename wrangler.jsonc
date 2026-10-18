@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quiz-stroel-dev",
+  "compatibility_date": "2026-10-01",
+  // STROEL account. CLOUDFLARE_ACCOUNT_ID in .env must match it: with more than
+  // one account on the login, wrangler picks per command and this field alone
+  // does not settle that.
+  "account_id": "b9f47bdfd5561613df8a0f20d7795cff",
+  // Static site: no Worker script, Cloudflare serves dist/ directly.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+  },
+  "routes": [{ "pattern": "quiz.stroel.dev", "custom_domain": true }],
+}
