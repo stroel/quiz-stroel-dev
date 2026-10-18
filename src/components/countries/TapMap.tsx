@@ -1,4 +1,4 @@
-import { geoCircle, geoDistance, geoGraticule10, geoPath } from 'd3-geo';
+import { geoCircle, geoDistance, geoGraticule10, geoPath, type GeoProjection } from 'd3-geo';
 import type { FeatureCollection } from 'geojson';
 import { useEffect, useMemo } from 'react';
 
@@ -16,6 +16,8 @@ export interface TapShape {
   collection: FeatureCollection;
   centre: [number, number];
   radius: number;
+  /** Where its name goes when names are shown; the centre if not given. */
+  anchor?: [number, number];
 }
 
 // Where a question starts: the region it lies in, so a phone screen shows land
@@ -47,6 +49,11 @@ const HINT_RADIUS = 24;
 // The wide, invisible stroke a river is tapped by: a 3 px line is too thin for a finger.
 const LINE_HIT_WIDTH = 22;
 
+// Names on the map: the size of their text, and a rough width per character to
+// keep two names from landing on top of each other.
+const LABEL_SIZE = 12;
+const LABEL_CHAR_WIDTH = 6.8;
+
 /**
  * The world to tap on. Starts on `startView`; drag to pan, pinch, scroll or use
  * + and − to zoom. Every shape is a target: countries (small ones also get a
@@ -62,6 +69,8 @@ export default function TapMap({
   tap,
   label,
   credit,
+  frameAnswer = true,
+  names,
 }: {
   targetId: string;
   /** What can be tapped; null while it loads. */
@@ -71,6 +80,10 @@ export default function TapMap({
   tap: TapState;
   label: string;
   credit?: string;
+  /** False keeps the view when the answer shows: the overview, where a tap on the map is the answer. */
+  frameAnswer?: boolean;
+  /** Names to write on the map, by shape id; none when left out. */
+  names?: Map<string, string> | undefined;
 }) {
   const countries = useWorld();
   const [ref, size] = useSize<HTMLDivElement>();
@@ -105,9 +118,9 @@ export default function TapMap({
     }));
   }, [target, hintRadius, setView]);
   useEffect(() => {
-    if (!target || tap.status !== 'revealed') return;
+    if (!target || tap.status !== 'revealed' || !frameAnswer) return;
     setView({ centre: target.centre, radius: Math.max(4, target.radius * 2.5) });
-  }, [target, tap.status, setView]);
+  }, [target, tap.status, frameAnswer, setView]);
 
   const drawing = useMemo(() => {
     if (!shapes || !countries || !size || !projection) return null;
@@ -133,8 +146,9 @@ export default function TapMap({
         target && hintRadius !== null
           ? (path(geoCircle().center(target.centre).radius(hintRadius)()) ?? '')
           : '',
+      labels: names ? placeLabels(shapes, names, view, projection, size) : [],
     };
-  }, [shapes, countries, size, view, projection, target, hintRadius, kind]);
+  }, [shapes, countries, size, view, projection, target, hintRadius, kind, names]);
 
   // Colour per state; a river is a stroke, everything else a fill.
   function fill(id: string): string {
@@ -249,6 +263,23 @@ export default function TapMap({
                 />
               ),
           )}
+          {drawing.labels.map((name) => (
+            <text
+              key={`name-${name.id}`}
+              x={name.x}
+              y={name.y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={LABEL_SIZE}
+              strokeWidth={3}
+              strokeLinejoin="round"
+              className={`pointer-events-none fill-slate-800 stroke-white font-semibold [paint-order:stroke] ${
+                kind === 'sea' || kind === 'line' ? 'italic' : ''
+              }`}
+            >
+              {name.text}
+            </text>
+          ))}
         </svg>
       )}
       {credit && (
@@ -282,4 +313,43 @@ export default function TapMap({
       )}
     </div>
   );
+}
+
+interface PlacedLabel {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+}
+
+/**
+ * Where each name goes, biggest shape first. A name that would cover one already
+ * placed is left out: zooming in makes room for it.
+ */
+function placeLabels(
+  shapes: TapShape[],
+  names: Map<string, string>,
+  view: View,
+  projection: GeoProjection,
+  size: { width: number; height: number },
+): PlacedLabel[] {
+  const placed: (PlacedLabel & { width: number })[] = [];
+  const height = LABEL_SIZE + 4;
+  for (const shape of [...shapes].sort((a, b) => b.radius - a.radius)) {
+    const text = names.get(shape.id);
+    const anchor = shape.anchor ?? shape.centre;
+    // Only on the near side of the globe.
+    if (!text || geoDistance(anchor, view.centre) >= Math.PI / 2) continue;
+    const point = projection(anchor);
+    if (!point) continue;
+    const [x, y] = point;
+    const width = text.length * LABEL_CHAR_WIDTH + 6;
+    if (x < 0 || x > size.width || y < 0 || y > size.height) continue;
+    const overlaps = placed.some(
+      (other) =>
+        Math.abs(other.x - x) < (other.width + width) / 2 && Math.abs(other.y - y) < height,
+    );
+    if (!overlaps) placed.push({ id: shape.id, text, x, y, width });
+  }
+  return placed.map(({ id, text, x, y }) => ({ id, text, x, y }));
 }

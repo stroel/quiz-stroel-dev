@@ -1,18 +1,18 @@
-import { geoCentroid } from 'd3-geo';
-import type { FeatureCollection } from 'geojson';
+import { geoCentroid, geoDistance } from 'd3-geo';
+import type { FeatureCollection, Geometry } from 'geojson';
 import { useMemo } from 'react';
 
 import type { View } from '@/components/countries/globe';
 import TapMap, { REGION_VIEW, type TapShape } from '@/components/countries/TapMap';
 import { radiusAround } from '@/components/countries/world';
-import { KIND, useGeo } from '@/components/geo/GeoMap';
+import { KIND, useGeo, type GeoShapes } from '@/components/geo/GeoMap';
 import type { TapState } from '@/components/quiz/QuizRound';
 import type { Region } from '@/data/flags';
 import { GEO, type GeoEntry, type GeoKind } from '@/data/geo';
 import { T } from '@/i18n/nl';
 
 // Belgian rivers start on Belgium itself: at continent scale they are invisible.
-const BELGIUM: View = { centre: [4.6, 50.6], radius: 1.7 };
+export const BELGIUM: View = { centre: [4.6, 50.6], radius: 1.7 };
 
 // Rough boxes [west, south, east, north] to pick the continent a shape lies in.
 const CONTINENTS: [Region, [number, number, number, number]][] = [
@@ -42,6 +42,48 @@ function startView(entry: GeoEntry, shape: TapShape | undefined): View {
     : view;
 }
 
+/** The entries that have a shape, each with its centre and size, ready to tap. */
+export function tapShapes(geo: GeoShapes, entries: GeoEntry[]): TapShape[] {
+  return entries.flatMap((entry) => {
+    const geometry = geo.get(entry.id);
+    if (!geometry) return [];
+    const collection: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', properties: {}, geometry }],
+    };
+    const centre = geoCentroid(collection);
+    const radius = radiusAround(collection, centre);
+    const anchor = lineAnchor(geometry, centre);
+    return [{ id: entry.id, collection, centre, radius, ...(anchor && { anchor }) }];
+  });
+}
+
+/**
+ * A point on a river for its name: the bend nearest its centre. The centre of
+ * a winding river often lies beside it, and a name next to the wrong river
+ * misleads. Null for anything that is not a line.
+ */
+function lineAnchor(geometry: Geometry, centre: [number, number]): [number, number] | null {
+  const lines =
+    geometry.type === 'LineString'
+      ? [geometry.coordinates]
+      : geometry.type === 'MultiLineString'
+        ? geometry.coordinates
+        : null;
+  if (!lines) return null;
+  let best: [number, number] | null = null;
+  let bestDistance = Infinity;
+  for (const [lon, lat] of lines.flat()) {
+    if (lon === undefined || lat === undefined) continue;
+    const distance = geoDistance([lon, lat], centre);
+    if (distance < bestDistance) {
+      best = [lon, lat];
+      bestDistance = distance;
+    }
+  }
+  return best;
+}
+
 // Centres and sizes per kind, computed once per page.
 const shapesByKind = new Map<GeoKind, TapShape[]>();
 
@@ -53,16 +95,10 @@ export default function GeoTapMap({ entry, tap }: { entry: GeoEntry; tap: TapSta
     if (!geo) return null;
     const cached = shapesByKind.get(entry.kind);
     if (cached) return cached;
-    const built = GEO.filter((other) => other.kind === entry.kind).flatMap((other) => {
-      const geometry = geo.get(other.id);
-      if (!geometry) return [];
-      const collection: FeatureCollection = {
-        type: 'FeatureCollection',
-        features: [{ type: 'Feature', properties: {}, geometry }],
-      };
-      const centre = geoCentroid(collection);
-      return [{ id: other.id, collection, centre, radius: radiusAround(collection, centre) }];
-    });
+    const built = tapShapes(
+      geo,
+      GEO.filter((other) => other.kind === entry.kind),
+    );
     shapesByKind.set(entry.kind, built);
     return built;
   }, [geo, entry.kind]);
@@ -77,7 +113,7 @@ export default function GeoTapMap({ entry, tap }: { entry: GeoEntry; tap: TapSta
     [entry, shapes],
   );
 
-  if (!shapes) return <div className="absolute inset-0 bg-sky-100" />;
+  if (!shapes) return <div className="absolute inset-0 bg-slate-50" />;
   return (
     <TapMap
       targetId={entry.id}

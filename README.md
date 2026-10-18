@@ -14,8 +14,9 @@ startpagina laat je een quiz kiezen:
   je tikt de naam, of je krijgt de naam en tikt het aan op de kaart. Zie [`docs/aardrijkskunde.md`](docs/aardrijkskunde.md).
 - **Spreuken** (`/spreuken/`): wie zei het? Binnenkort.
 
-Elke quiz heeft een **Overzicht** (`/vlaggen/overzicht/`, `/hoofdsteden/overzicht/`) met alle
-vragen en antwoorden per regio, om door te scrollen.
+Vlaggen en hoofdsteden hebben een **Overzicht** (`/vlaggen/overzicht/`, `/hoofdsteden/overzicht/`)
+met alle vragen en antwoorden per regio, om door te scrollen. Het overzicht van aardrijkskunde
+(`/aardrijkskunde/overzicht/`) toont één reeks tegelijk op de kaart, met de namen in een lijst.
 
 Kaartdata: [Natural Earth](https://www.naturalearthdata.com) (publiek domein) en, voor de Belgische
 rivieren, © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers (ODbL).

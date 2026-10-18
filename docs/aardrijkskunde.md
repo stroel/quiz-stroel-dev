@@ -61,6 +61,30 @@ dataset.
 - Fout getikt: "Nee, dat is de Maas." De historiek houdt beide richtingen apart bij (`maas` en
   `place:maas`).
 
+## Overzicht
+
+`/aardrijkskunde/overzicht/` (de knop **Overzicht** rechtsboven in het instelscherm) toont alles
+uit één reeks tegelijk op de kaart, met de namen in een lijst. Bovenaan kies je de **Reeks**
+(onthouden in `quiz:aardrijkskunde:overview`); één reeks tegelijk, zodat zeeën, rivieren en
+gebergtes niet door elkaar staan (Steve, 18 oktober 2026).
+
+- Een tik op de kaart of op een naam in de lijst kleurt het aan in de accentkleur en toont de naam
+  onderaan op de kaart.
+- Alleen een naam uit de lijst verschuift de kaart ernaartoe; wie op de kaart tikt, heeft het al in
+  beeld en wil niet dat de kaart verspringt (`frameAnswer` op `TapMap`).
+- Het is dezelfde tikkaart als in de quiz (`src/components/geo/GeoOverview.tsx` op
+  `TapMap.tsx`). Op de telefoon staat de kaart tussen de reeksen en de lijst, vanaf `md` ernaast
+  en vast in beeld.
+- Anders dan de andere overzichten is dit een eiland (`client:only`): de kaart wordt getekend op
+  de grootte van haar vlak, en de keuze van de reeks heeft script nodig.
+
+- **Namen** (de schakelaar linksboven op de kaart, standaard aan, onthouden in
+  `quiz:aardrijkskunde:overview-names`) zet alle namen van de reeks op de kaart. Ze worden
+  geplaatst van groot naar klein; een naam die een andere zou bedekken, valt weg tot je inzoomt.
+  Zo blijft de wereldkaart met 46 rivieren leesbaar. Een zee of gebergte krijgt zijn naam in het
+  midden, een rivier op het punt van de lijn dat het dichtst bij dat midden ligt (het midden van
+  een kronkelende rivier ligt vaak ernaast). Water staat cursief, zoals in een atlas.
+
 ## De dataset
 
 `src/data/geo.ts`: per vraag een vaste id (die de historiek gebruikt), de Nederlandse naam, andere

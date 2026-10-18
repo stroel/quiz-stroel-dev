@@ -1,0 +1,13 @@
+---
+// Every sea, river and range on the map, one series at a time. Unlike the other
+// overviews this one is an island: a map is drawn for the size of its stage, and
+// the series toggle and the selection need script anyway. `client:only` because
+// the last series chosen comes from localStorage.
+import GeoOverview from '@/components/geo/GeoOverview';
+import { T } from '@/i18n/nl';
+import Overview from '@/layouts/Overview.astro';
+---
+
+<Overview quizTitle={T.quizzes.aardrijkskunde.title} quizHref="/aardrijkskunde/">
+  <GeoOverview client:only="react" />
+</Overview>

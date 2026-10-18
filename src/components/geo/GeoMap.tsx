@@ -5,7 +5,7 @@ import HighlightMap, { type HighlightKind } from '@/components/countries/Highlig
 import { GEO, type GeoEntry } from '@/data/geo';
 import { T } from '@/i18n/nl';
 
-type GeoShapes = Map<string, Geometry>;
+export type GeoShapes = Map<string, Geometry>;
 
 let shapes: Promise<GeoShapes> | null = null;
 

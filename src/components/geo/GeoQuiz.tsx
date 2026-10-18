@@ -97,6 +97,7 @@ export default function GeoQuiz() {
     <QuizFlow
       quiz="aardrijkskunde"
       title={T.quizzes.aardrijkskunde.title}
+      overview="/aardrijkskunde/overzicht/"
       select={() => GEO.filter((entry) => groups.includes(entry.group))}
       regions={false}
       extras={[]}

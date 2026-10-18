@@ -72,6 +72,12 @@ export const T = {
     wrongPick: (name: string) => `Nee, dat is de ${name}.`,
     credit: 'Natural Earth · © OpenStreetMap-bijdragers',
     placeholder: { zee: 'Welke zee?', rivier: 'Welke rivier?', gebergte: 'Welk gebergte?' },
+    overview: {
+      series: 'Reeks',
+      mapLabel: 'Kaart met alles uit de gekozen reeks',
+      tapHint: 'Tik op de kaart of in de lijst',
+      names: 'Namen',
+    },
   },
   units: {
     questions: (count: number) => (count === 1 ? 'vraag' : 'vragen'),
