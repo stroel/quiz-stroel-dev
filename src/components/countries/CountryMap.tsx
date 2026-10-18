@@ -1,19 +1,10 @@
-import {
-  geoAzimuthalEqualArea,
-  geoBounds,
-  geoCentroid,
-  geoCircle,
-  geoDistance,
-  geoPath,
-} from 'd3-geo';
-import type { Feature, FeatureCollection, Geometry } from 'geojson';
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { feature } from 'topojson-client';
+import { geoAzimuthalEqualArea, geoCentroid, geoCircle, geoPath } from 'd3-geo';
+import type { FeatureCollection } from 'geojson';
+import { useMemo, useRef, useState, type PointerEvent } from 'react';
 
+import { clamp, radiusAround, useSize, useWorld } from '@/components/countries/world';
 import Icon from '@/components/Icon';
 import { T } from '@/i18n/nl';
-
-type Country = Feature<Geometry, null> & { id: string };
 
 // Room between the context circle and the edge of the stage, in px.
 const PADDING = 16;
@@ -35,80 +26,6 @@ const ZOOM_MAX_RADIUS = 90;
 // would be a dot nobody sees.
 const TINY_AREA = 60;
 const RING_RADIUS = 16;
-
-let world: Promise<Country[]> | null = null;
-
-/** Loads the map once per page; every question after the first draws instantly. */
-export function loadWorld(): Promise<Country[]> {
-  world ??= (async () => {
-    const response = await fetch('/maps/countries.json');
-    if (!response.ok) throw new Error(`Could not load the map: ${response.status}`);
-    // The topology types live in a package we do not depend on directly.
-    const topology = (await response.json()) as Parameters<typeof feature>[0] & {
-      objects: { countries: Parameters<typeof feature>[1] };
-    };
-    const collection = feature(topology, topology.objects.countries) as FeatureCollection<
-      Geometry,
-      null
-    >;
-    return collection.features.map((f) => ({ ...f, id: String(f.id ?? '') }));
-  })();
-  return world;
-}
-
-/** The size of an element, kept up to date as the stage grows and shrinks (keyboard, rotation). */
-function useSize<T extends Element>() {
-  const ref = useRef<T>(null);
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return;
-      const { width, height } = entry.contentRect;
-      setSize({ width: Math.round(width), height: Math.round(height) });
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-  return [ref, size] as const;
-}
-
-function useWorld(): Country[] | null {
-  const [countries, setCountries] = useState<Country[] | null>(null);
-  useEffect(() => {
-    let current = true;
-    loadWorld()
-      .then((loaded) => {
-        if (current) setCountries(loaded);
-      })
-      .catch((error: unknown) => {
-        // The question still shows its hints and answer; only the map is missing.
-        console.error(error);
-      });
-    return () => {
-      current = false;
-    };
-  }, []);
-  return countries;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-/** Angular radius in degrees of the smallest circle around `centre` that holds the bounds. */
-function radiusAround(target: FeatureCollection, centre: [number, number]): number {
-  const [[west, south], [east, north]] = geoBounds(target);
-  const corners: [number, number][] = [
-    [west, south],
-    [west, north],
-    [east, south],
-    [east, north],
-  ];
-  const radians = Math.max(...corners.map((corner) => geoDistance(centre, corner)));
-  return (radians * 180) / Math.PI;
-}
 
 /**
  * The world around one country, with that country filled in. An azimuthal

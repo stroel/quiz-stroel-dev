@@ -67,6 +67,13 @@ export const T = {
   },
   countries: {
     mapLabel: 'Kaart met het land om te raden',
+    tapMapLabel: 'Kaart: tik op het land',
+    direction: 'Vraag naar',
+    toName: 'De naam',
+    toNameDetail: 'Een land is aangeduid, je tikt de naam.',
+    toPlace: 'De plaats',
+    toPlaceDetail: 'Je krijgt de naam, je tikt het land op de kaart.',
+    wrongPick: (name: string) => `Nee, dat is ${name}.`,
     zoomIn: 'Inzoomen',
     zoomOut: 'Uitzoomen',
     placeholder: 'Welk land?',

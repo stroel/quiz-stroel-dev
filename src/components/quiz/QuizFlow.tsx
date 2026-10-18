@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 
 import QuizResults from '@/components/quiz/QuizResults';
-import QuizRound from '@/components/quiz/QuizRound';
+import QuizRound, { type TapState, type Tapping } from '@/components/quiz/QuizRound';
 import QuizSetup, { type ExtraKey } from '@/components/quiz/QuizSetup';
 import { REGIONS, type FlagEntry } from '@/data/flags';
 import { T } from '@/i18n/nl';
@@ -42,6 +42,7 @@ export default function QuizFlow({
   candidates,
   prompt,
   placeholder,
+  tapping,
 }: {
   /** Key in localStorage: `quiz:<quiz>:setup` and `quiz:<quiz>:history`. */
   quiz: string;
@@ -53,8 +54,9 @@ export default function QuizFlow({
   overview?: string;
   questionsFor: (entries: FlagEntry[]) => Question[];
   candidates: Candidates;
-  prompt: (question: Question) => ReactNode;
+  prompt: (question: Question, tap: TapState) => ReactNode;
   placeholder: string;
+  tapping?: Tapping | undefined;
 }) {
   const setupKey = `quiz:${quiz}:setup`;
   const [setup, setSetup] = useState<Setup>(() => ({
@@ -107,6 +109,7 @@ export default function QuizFlow({
           candidates={candidates}
           prompt={prompt}
           placeholder={placeholder}
+          {...(tapping && { tapping })}
           timeLimit={setup.timer}
           onFinish={(results) => finish(phase.questions, results)}
         />

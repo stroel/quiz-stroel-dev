@@ -9,7 +9,26 @@ import type { QuestionResult } from '@/lib/history';
 import { matchAnswer, normalize } from '@/lib/matcher';
 import type { Candidates, Question } from '@/lib/question';
 
-type Status = 'asking' | 'wrong' | 'correct' | 'revealed';
+export type Status = 'asking' | 'wrong' | 'correct' | 'revealed';
+
+/** What a tapping prompt needs: where the player tapped goes back through `pick`. */
+export interface TapState {
+  pick: (id: string) => void;
+  hintLevel: number;
+  status: Status;
+  /** Ids tapped wrongly for this question, to colour them on the map. */
+  picked: string[];
+}
+
+/** Answering by tapping on the stage (a map) instead of typing. */
+export interface Tapping {
+  /** The question in the bottom row, where the input would be. */
+  label: (question: Question) => string;
+  /** How many hints there are; each one narrows the area further. */
+  maxHints: number;
+  /** Feedback for a wrong tap, naming what was tapped. */
+  wrongText: (pickedId: string) => string;
+}
 
 // How long a correct answer stays on screen before the next question.
 const ADVANCE_DELAY_MS = 1100;
@@ -95,15 +114,17 @@ function Mask({ cells }: { cells: MaskCell[] }) {
 }
 
 /**
- * One round of a typed-answer quiz: the question on a grey stage, the answer
- * typed below it, with hints, a timer and an inline stop. The quiz draws the
- * question itself through `prompt`; everything else is shared.
+ * One round of a quiz: the question on a grey stage, the answer typed below it
+ * (or tapped on the stage, with `tapping`), with hints, a timer and an inline
+ * stop. The quiz draws the question itself through `prompt`; everything else
+ * is shared.
  */
 export default function QuizRound({
   questions,
   candidates,
   prompt,
   placeholder,
+  tapping,
   timeLimit,
   onFinish,
 }: {
@@ -111,8 +132,9 @@ export default function QuizRound({
   /** Every answer the quiz knows; each question's own candidate shares its id. */
   candidates: Candidates;
   /** What the player answers about: a flag, a country, a capital. */
-  prompt: (question: Question) => ReactNode;
+  prompt: (question: Question, tap: TapState) => ReactNode;
   placeholder: string;
+  tapping?: Tapping;
   /** Seconds per question, or null for no limit. */
   timeLimit: number | null;
   onFinish: (results: QuestionResult[]) => void;
@@ -128,6 +150,7 @@ export default function QuizRound({
   const [timedOut, setTimedOut] = useState(false);
   const [confirmingStop, setConfirmingStop] = useState(false);
   const [burst, setBurst] = useState(0);
+  const [picked, setPicked] = useState<string[]>([]);
   const stopAskedAt = useRef(0);
   const [remainingMs, setRemainingMs] = useState(timeLimit === null ? 0 : timeLimit * 1000);
   const questionStart = useRef(0);
@@ -221,6 +244,7 @@ export default function QuizRound({
     setApproximate(false);
     setWrongTries(0);
     setTimedOut(false);
+    setPicked([]);
     inputRef.current?.focus();
   }
 
@@ -242,8 +266,12 @@ export default function QuizRound({
       return;
     }
 
+    markCorrect(match.approximate);
+  }
+
+  function markCorrect(approximately: boolean) {
     setStatus('correct');
-    setApproximate(match.approximate);
+    setApproximate(approximately);
     setBurst(burst + 1);
     const all = finishQuestion({
       id: question.id,
@@ -254,10 +282,23 @@ export default function QuizRound({
     advanceTimer.current = window.setTimeout(() => advance(all), ADVANCE_DELAY_MS);
   }
 
+  /** A tap on the stage, in tapping mode. */
+  function pick(id: string) {
+    if (done) return;
+    if (id === question.id) {
+      markCorrect(false);
+      return;
+    }
+    setStatus('wrong');
+    setWrongTries(wrongTries + 1);
+    setPicked((current) => (current.includes(id) ? current : [...current, id]));
+  }
+
   function takeHint() {
     // The answer stays in the input; only the red "wrong" state goes.
     if (status === 'wrong') setStatus('asking');
-    setHint(nextHint(answer, hint));
+    // A tapping hint has no letters: its level alone narrows the area on the map.
+    setHint(tapping ? { level: hint.level + 1, revealed: [] } : nextHint(answer, hint));
     inputRef.current?.focus();
   }
 
@@ -302,7 +343,11 @@ export default function QuizRound({
             text: timedOut ? T.quiz.timedOut(answer) : T.quiz.revealed(answer),
           }
         : status === 'wrong'
-          ? { tone: 'bg-rose-600 text-white', icon: 'x', text: T.quiz.wrong }
+          ? {
+              tone: 'bg-rose-600 text-white',
+              icon: 'x',
+              text: tapping && picked.length > 0 ? tapping.wrongText(picked.at(-1)!) : T.quiz.wrong,
+            }
           : null;
 
   return (
@@ -390,7 +435,7 @@ export default function QuizRound({
       </header>
 
       <div className="relative mt-5 flex min-h-0 flex-1 flex-col items-center justify-center gap-4 border-y border-slate-200 bg-slate-50 p-6">
-        {prompt(question)}
+        {prompt(question, { pick, hintLevel: hint.level, status, picked })}
         {done && question.note && (
           <p className="max-w-sm text-center text-sm text-slate-600">{question.note}</p>
         )}
@@ -413,7 +458,7 @@ export default function QuizRound({
               </p>
             )}
           </div>
-          {hint.level > 0 && !done && (
+          {hint.level > 0 && !done && !tapping && (
             <div className="rounded-[1.75rem] bg-white px-5 pt-1.5 pb-2.5 shadow-md ring-1 ring-slate-200">
               <Mask cells={cells} />
             </div>
@@ -433,7 +478,7 @@ export default function QuizRound({
           <button
             type="button"
             onClick={takeHint}
-            disabled={done || !canHint(answer, hint)}
+            disabled={done || (tapping ? hint.level >= tapping.maxHints : !canHint(answer, hint))}
             aria-label={T.quiz.hint}
             className={`${CLS.square} relative`}
           >
@@ -444,38 +489,45 @@ export default function QuizRound({
               </span>
             )}
           </button>
-          <input
-            key={shakeKey}
-            ref={inputRef}
-            value={input}
-            onChange={(event) => {
-              setInput(event.target.value);
-              if (status === 'wrong') setStatus('asking');
-            }}
-            placeholder={placeholder}
-            autoFocus
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            data-1p-ignore
-            data-lpignore="true"
-            enterKeyHint={done ? 'next' : 'go'}
-            readOnly={done}
-            className={`h-14 min-w-0 flex-1 rounded-xl border-2 bg-white px-3 text-xl uppercase placeholder:text-base placeholder:text-slate-400 placeholder:normal-case focus:outline-none ${
-              status === 'wrong'
-                ? 'animate-shake border-rose-600'
-                : status === 'correct'
-                  ? 'border-emerald-600'
-                  : 'focus:border-accent-700 border-slate-300'
-            }`}
-          />
+          {tapping ? (
+            <p className="flex h-14 min-w-0 flex-1 items-center justify-center rounded-xl border-2 border-slate-200 bg-slate-50 px-3 text-center text-lg leading-tight font-semibold">
+              <span className="line-clamp-2">{tapping.label(question)}</span>
+            </p>
+          ) : (
+            <input
+              key={shakeKey}
+              ref={inputRef}
+              value={input}
+              onChange={(event) => {
+                setInput(event.target.value);
+                if (status === 'wrong') setStatus('asking');
+              }}
+              placeholder={placeholder}
+              autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-1p-ignore
+              data-lpignore="true"
+              enterKeyHint={done ? 'next' : 'go'}
+              readOnly={done}
+              className={`h-14 min-w-0 flex-1 rounded-xl border-2 bg-white px-3 text-xl placeholder:text-base placeholder:text-slate-400 focus:outline-none ${
+                status === 'wrong'
+                  ? 'animate-shake border-rose-600'
+                  : status === 'correct'
+                    ? 'border-emerald-600'
+                    : 'focus:border-accent-700 border-slate-300'
+              }`}
+            />
+          )}
           <button
             type="submit"
+            disabled={!!tapping && !done}
             aria-label={done ? T.quiz.next : T.quiz.check}
-            className="bg-accent-800 hover:bg-accent-900 inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white"
+            className="bg-accent-800 hover:bg-accent-900 inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white disabled:opacity-30"
           >
-            <Icon name={done ? 'arrow-right' : 'corner-down-left'} className="h-6 w-6" />
+            <Icon name={done || tapping ? 'arrow-right' : 'corner-down-left'} className="h-6 w-6" />
           </button>
         </form>
       </div>

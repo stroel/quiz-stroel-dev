@@ -5,12 +5,17 @@ dezelfde als bij de vlaggen; zie [`vlaggen.md`](vlaggen.md). Hier staat alleen w
 
 ## Spelvorm
 
-Een land is ingekleurd op een kaart van zijn streek, en je tikt de naam. Zelfde matcher, zelfde
-kandidaten als bij de vlaggen (alle landen en gebieden, zonder de organisaties).
+Bovenaan het instelscherm staat **Vraag naar**, met twee richtingen (Steve, 18 oktober 2026). De
+keuze wordt onthouden in `quiz:landen:direction`.
 
-Steve koos op 18 oktober 2026 voor twee richtingen, zoals bij de hoofdsteden: deze, en "naam
-gegeven, tik op de kaart". Die tweede komt er nog bij, als keuze **Vraag naar** in het
-instelscherm.
+- **De naam** (standaard): een land is ingekleurd op een kaart van zijn streek, en je tikt de naam.
+  Zelfde matcher en kandidaten als bij de vlaggen (alle landen en gebieden, zonder de
+  organisaties).
+- **De plaats**: onderaan staat de naam, en je tikt het land aan op de kaart. Zie
+  [Tikken op de kaart](#tikken-op-de-kaart).
+
+De historiek (`quiz:landen:history`) houdt beide apart bij: `be` voor de naam, `place:be` voor
+de plaats.
 
 ## Welke landen
 
@@ -46,3 +51,21 @@ omdat ze op deze schaal geen vorm hebben: Tuvalu, Gibraltar en Tokelau. Zo blijv
 
 Lukt het laden van de kaart niet, dan blijft het vlak leeg en meldt de console waarom. Hints en
 **Toon** werken nog.
+
+## Tikken op de kaart
+
+`src/components/countries/TapMap.tsx`, in de ronde aangezet met `tapping` op `QuizRound`: in plaats
+van het invulveld staat de naam van het land, en de pijl is pas te gebruiken na het antwoord.
+
+- **Start**: de kaart opent op de regio van het land (Europa, Azië, …, de eerste regio uit
+  `flags.ts`), zodat er op een telefoon land groot genoeg is om te raken. Welke regio het is, is
+  het enige wat de kaart verklapt.
+- **Bewegen**: slepen verschuift, knijpen, scrollen of **+** en **−** zoomen. Een druk die minder
+  dan 8 px beweegt, telt als tik.
+- **Tikken**: elk land is een doel. Is een land op het scherm kleiner dan 80 px², dan krijgt het
+  ook een witte stip om op te tikken. Fout getikt: het land kleurt rood en de melding zegt welk land
+  het was ("Nee, dat is Oekraïne."); het telt als foute poging. Juist: het land kleurt groen, met
+  confetti.
+- **Hints**: drie, elk een gestreepte cirkel rond het land die de vorige halveert (24°, 12°, 6°,
+  nooit kleiner dan het land zelf). De kaart schuift naar de cirkel en zoomt alleen in, nooit uit.
+- **Toon**: de kaart zoomt in op het land en kleurt het in.
