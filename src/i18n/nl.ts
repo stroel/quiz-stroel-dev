@@ -18,7 +18,7 @@ export const T = {
       title: 'Aardrijkskunde',
       description: 'Zeeën, rivieren en gebergtes op de kaart.',
     },
-    spreuken: { title: 'Spreuken', description: 'Wie zei het, en wanneer?' },
+    citaten: { title: 'Citaten', description: 'Wie zei het? Of uit welke film komt het?' },
   },
   regions: {
     europa: 'Europa',
@@ -83,6 +83,19 @@ export const T = {
     questions: (count: number) => (count === 1 ? 'vraag' : 'vragen'),
     flags: (count: number) => (count === 1 ? 'vlag' : 'vlaggen'),
     countries: (count: number) => (count === 1 ? 'land' : 'landen'),
+    quotes: (count: number) => (count === 1 ? 'citaat' : 'citaten'),
+  },
+  quotes: {
+    groupsTitle: 'Reeksen',
+    groups: {
+      wereld: 'Wereldwijd',
+      'belgie-nederland': 'België en Nederland',
+      'film-tv': 'Film en tv',
+    },
+    placeholder: { persoon: 'Wie zei het?', film: 'Welke film?', serie: 'Welke serie?' },
+    /** "1963, toespraak in West-Berlijn"; a year before Christ as "47 v.Chr."; no year, just the context. */
+    note: (year: number | undefined, context: string) =>
+      year === undefined ? context : `${year < 0 ? `${-year} v.Chr.` : year}, ${context}`,
   },
   capitals: {
     direction: 'Vraag naar',

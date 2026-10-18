@@ -1,6 +1,7 @@
 ---
 // Start page: pick a quiz. Quizzes that are planned but not built yet are
-// listed as "Binnenkort" so the start page already has its final shape.
+// listed as "Binnenkort" so the start page already has its final shape; with
+// none left, that panel goes.
 import Icon from '@/components/Icon.astro';
 import { T } from '@/i18n/nl';
 import Base from '@/layouts/Base.astro';
@@ -10,7 +11,7 @@ const quizzes = [
   { href: '/hoofdsteden/', icon: 'landmark', ...T.quizzes.hoofdsteden, ready: true },
   { href: '/landen/', icon: 'map', ...T.quizzes.landen, ready: true },
   { href: '/aardrijkskunde/', icon: 'mountain', ...T.quizzes.aardrijkskunde, ready: true },
-  { href: '/spreuken/', icon: 'quote', ...T.quizzes.spreuken, ready: false },
+  { href: '/citaten/', icon: 'quote', ...T.quizzes.citaten, ready: true },
 ];
 const ready = quizzes.filter((quiz) => quiz.ready);
 const soon = quizzes.filter((quiz) => !quiz.ready);
@@ -51,24 +52,26 @@ const soon = quizzes.filter((quiz) => !quiz.ready);
         </ul>
       </section>
 
-      <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <h2 class="flex min-h-10 items-center border-b border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-600">
-          {T.site.soon}
-        </h2>
-        <ul class="divide-y divide-slate-200">
-          {soon.map((quiz) => (
-            <li class="flex items-center gap-3 px-4 py-3.5 text-slate-400">
-              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100">
-                <Icon name={quiz.icon} class="h-5 w-5" />
-              </span>
-              <span class="flex flex-1 flex-col">
-                <span class="font-semibold">{quiz.title}</span>
-                <span class="text-sm">{quiz.description}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {soon.length > 0 && (
+        <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <h2 class="flex min-h-10 items-center border-b border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-600">
+            {T.site.soon}
+          </h2>
+          <ul class="divide-y divide-slate-200">
+            {soon.map((quiz) => (
+              <li class="flex items-center gap-3 px-4 py-3.5 text-slate-400">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                  <Icon name={quiz.icon} class="h-5 w-5" />
+                </span>
+                <span class="flex flex-1 flex-col">
+                  <span class="font-semibold">{quiz.title}</span>
+                  <span class="text-sm">{quiz.description}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
 
     <footer class="mt-auto flex justify-center px-4 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]">

@@ -28,7 +28,7 @@ Twijfel je over architectuur: **stop en vraag het aan Steve**, of kijk in de doc
 2. Lees `CONVENTIONS.md` voor codestijl en patronen
 3. Lees `STYLEGUIDE.md` voor UI-conventies, en de skill `/quiz-design` (`.claude/skills/quiz-design/`) voor de layout van de quiz; waar ze botsen, wint de skill
 4. Lees de projectspecifieke docs die bij de huidige taak horen
-5. Lees `docs/vlaggen.md` voor je aan de vlaggenquiz, de gedeelde quizschermen of de matcher werkt, en `docs/hoofdsteden.md` voor de hoofdsteden
+5. Lees `docs/vlaggen.md` voor je aan de vlaggenquiz, de gedeelde quizschermen of de matcher werkt, `docs/hoofdsteden.md` voor de hoofdsteden en `docs/citaten.md` voor de citaten
 
 ## Bij het maken van wijzigingen
 
@@ -127,7 +127,7 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 
 ### Opbouw
 
-- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, `/hoofdsteden/`, `/landen/`, `/aardrijkskunde/`, later `/spreuken/`), met een overzicht op `<quiz>/overzicht/` (statisch, behalve dat van aardrijkskunde: een kaart als eiland).
+- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, `/hoofdsteden/`, `/landen/`, `/aardrijkskunde/`, `/citaten/`), met een overzicht op `<quiz>/overzicht/` (statisch, behalve dat van aardrijkskunde: een kaart als eiland).
 - Een quiz met getypte antwoorden is `src/components/quiz/QuizFlow.tsx` (instellen, ronde, eindscherm, historiek) met een dunne schil per quiz (`flags/FlagQuiz.tsx`, `capitals/CapitalQuiz.tsx`): die zegt wat ze selecteert, hoe dat vragen worden (`src/lib/question.ts`) en hoe een vraag eruitziet.
 - Herbruikbare logica staat in `src/lib/`: `matcher.ts` (typfouten), `hints.ts` (masker en letters), `history.ts` en `storage.ts` (localStorage). Een nieuwe quiz hergebruikt die en brengt alleen zijn dataset en schermen mee.
 - Elke quiz is één React-eiland met `client:only="react"`: alles wat het toont hangt af van `localStorage`.
@@ -136,7 +136,7 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 
 ### Open punten
 
-- `/landen/` heeft de richting "land aangeduid, naam tikken". De tweede richting, "naam gegeven, tik op de kaart", komt er als keuze **Vraag naar** bij, zoals bij de hoofdsteden (beslissing van Steve, 18-10-2026). `/spreuken/` staat als "Binnenkort" op de startpagina.
+- `/citaten/` vraagt alleen "wie zei het"; het jaar als tweede richting kan later (Steve, 18-10-2026). Zie `docs/citaten.md`.
 - `/aardrijkskunde/` (zeeën, rivieren, gebergtes) heeft beide richtingen, net als `/landen/`. De vormen staan in `public/geo/geo.json` (in git); hoe je ze opnieuw bouwt staat in `docs/aardrijkskunde.md`.
 - Land → vlag (raster van 9 of 16 met lookalikes) is nog niet gebouwd.
 - PWA: er zijn alleen meta-tags voor "zet op beginscherm"; een manifest en service worker voor offline gebruik komen later.

@@ -1,0 +1,36 @@
+---
+// Every quote with who said it, per series: to read through before playing.
+import Panel from '@/components/Panel.astro';
+import { QUOTE_GROUPS, QUOTES } from '@/data/quotes';
+import { T } from '@/i18n/nl';
+import Overview from '@/layouts/Overview.astro';
+
+const sections = QUOTE_GROUPS.map((group) => ({
+  title: T.quotes.groups[group],
+  quotes: QUOTES.filter((quote) => quote.group === group).sort(
+    (a, b) => a.by.localeCompare(b.by, 'nl') || (a.year ?? 0) - (b.year ?? 0),
+  ),
+}));
+---
+
+<Overview quizTitle={T.quizzes.citaten.title} quizHref="/citaten/">
+  {sections.map((section) => (
+    <Panel collapsible title={section.title} aside={String(section.quotes.length)}>
+      <ul class="divide-y divide-slate-200 md:-mb-px md:grid md:grid-cols-2 md:divide-y-0 xl:grid-cols-3">
+        {section.quotes.map((quote) => (
+          <li class="flex flex-col gap-1 px-4 py-3 md:border-b md:border-slate-200">
+            <span lang={quote.lang} class="font-medium">
+              {quote.text}
+            </span>
+            {quote.translation && <span class="text-sm text-slate-500">{quote.translation}</span>}
+            <span class="text-sm text-slate-500">
+              <span class="font-semibold text-slate-900">{quote.by}</span>
+              {' · '}
+              {T.quotes.note(quote.year, quote.context)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  ))}
+</Overview>
