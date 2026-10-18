@@ -139,5 +139,5 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 - `/citaten/` vraagt alleen "wie zei het"; het jaar als tweede richting kan later (Steve, 18-10-2026). Zie `docs/citaten.md`.
 - `/aardrijkskunde/` (zeeën, rivieren, gebergtes) heeft beide richtingen, net als `/landen/`. De vormen staan in `public/geo/geo.json` (in git); hoe je ze opnieuw bouwt staat in `docs/aardrijkskunde.md`.
 - Land → vlag (raster van 9 of 16 met lookalikes) is nog niet gebouwd.
-- PWA: er zijn alleen meta-tags voor "zet op beginscherm"; een manifest en service worker voor offline gebruik komen later.
+- PWA: er is een manifest (`public/manifest.webmanifest`, iconen in `public/icons/`), dus de app is te installeren; een service worker voor offline gebruik komt later.
 - Er is nog geen testrunner. De matcher is met de hand nagekeken tegen de gevallen in `docs/vlaggen.md`; Vitest toevoegen is een beslissing voor Steve.

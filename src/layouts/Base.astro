@@ -2,8 +2,9 @@
 // Shell for every page. Built for phones first: the viewport follows the
 // keyboard (`interactive-widget`), the page may run under the notch
 // (`viewport-fit`), and when added to the home screen it opens without
-// browser chrome. The quiz is light only (see the quiz-design skill), so there
-// is no dark-theme script.
+// browser chrome: the manifest makes it installable on Android, the
+// apple-touch-icon gives iOS its home-screen icon. The quiz is light only
+// (see the quiz-design skill), so there is no dark-theme script.
 import '@/styles/global.css';
 
 interface Props {
@@ -25,6 +26,8 @@ const { title } = Astro.props;
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Quiz" />
     <link rel="icon" type="image/svg+xml" href="https://stroel.dev/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="color-scheme" content="light" />
     <link rel="preload" href="/fonts/lexend-latin.woff2" as="font" type="font/woff2" crossorigin />

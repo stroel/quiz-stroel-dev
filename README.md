@@ -25,6 +25,9 @@ rivieren, © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers
 
 Er is geen backend. Je instellingen en historiek staan in `localStorage` van het toestel.
 
+Op de telefoon installeer je de quiz als app: op Android via **Installeren** in het menu van
+Chrome, op iOS via **Deel** → **Zet op beginscherm** in Safari.
+
 ## Stack
 
 | Pakket | Versie | Rol |

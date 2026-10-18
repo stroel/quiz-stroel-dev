@@ -125,4 +125,7 @@ speelt dat niet: het schermtoetsenbord verschijnt alleen voor het veld zelf.
   `visualViewport.height`.
 - Het invoerveld heeft geen autocorrectie, geen hoofdletters en geen spellingcontrole. Wachtwoord-
   managers worden genegeerd.
-- Met de meta-tags voor web-apps opent "Zet op beginscherm" de quiz zonder browserbalken.
+- Met de meta-tags voor web-apps en `public/manifest.webmanifest` is de quiz te installeren als app:
+  Android biedt **Installeren** aan, op iOS opent "Zet op beginscherm" haar zonder browserbalken.
+  Het icoon is het STROEL-teken in wit op `accent-800`; de PNG's in `public/icons/` staan in git.
+  Er is nog geen service worker, dus zonder netwerk start de app niet.
