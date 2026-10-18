@@ -1,0 +1,30 @@
+name: PR Build Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-check:
+    name: Build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The same gate the deploy has, so a type error is caught on the PR rather
+      # than when it reaches main.
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build

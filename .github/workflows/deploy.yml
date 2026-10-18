@@ -1,0 +1,39 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build and deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Before the build, so a type error stops the deploy instead of shipping:
+      # `astro build` strips types without checking them. Needs no secrets.
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      # The repo's own wrangler (package.json, kept current by the nightly update),
+      # not a pinned `dlx` copy: production deploys with the version that was
+      # built and tested against. Static assets only, so wrangler.jsonc as is.
+      - name: Deploy
+        run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

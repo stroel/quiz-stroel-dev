@@ -48,18 +48,25 @@ Bij elke start kopieert `src/integrations/flag-assets.ts` de gebruikte vlaggen n
 | `pnpm dev` | Dev-server |
 | `pnpm build` | Statische build naar `dist/` |
 | `pnpm preview` | `dist/` lokaal serveren via wrangler |
-| `pnpm deploy` | Bouwen en deployen naar Cloudflare |
+| `pnpm run deploy` | Bouwen en deployen naar Cloudflare |
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | `astro check` |
 | `pnpm format` | Prettier |
 
 ## Deployen
 
-Het project draait als Worker met Static Assets op het STROEL-account (`wrangler.jsonc`). De
-custom domain `quiz.stroel.dev` wordt bij de eerste deploy aangemaakt. Eenmalig:
+Het project draait als Worker met Static Assets op het STROEL-account (`wrangler.jsonc`), op
+https://quiz.stroel.dev (custom domain, aangemaakt bij de eerste deploy op 18 oktober 2026).
 
-1. Kopieer `.env.example` naar `.env`; die zet `CLOUDFLARE_ACCOUNT_ID`.
-2. Draai `pnpm deploy`.
+- **Automatisch**: elke push naar `main` draait `.github/workflows/deploy.yml`: typecheck, build en
+  `wrangler deploy` met de wrangler-versie uit `package.json`. Een typefout stopt de deploy. Een PR
+  naar `main` krijgt dezelfde typecheck en build (`pr-check.yml`), zonder deploy.
+- **Secrets** (Settings → Secrets and variables → Actions): `CLOUDFLARE_API_TOKEN` (een token met
+  het recht om Workers te bewerken op het STROEL-account) en `CLOUDFLARE_ACCOUNT_ID`
+  (`b9f47bdfd5561613df8a0f20d7795cff`).
+- **Met de hand**: kopieer `.env.example` naar `.env` (die zet `CLOUDFLARE_ACCOUNT_ID`) en draai
+  `pnpm run deploy`. Let op: `pnpm deploy` zonder `run` is een ingebouwd pnpm-commando dat iets
+  anders doet.
 
 ## Nachtelijke dependency-update
 
