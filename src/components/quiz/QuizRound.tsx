@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type SubmitEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type SubmitEvent } from 'react';
 
 import Confetti from '@/components/Confetti';
 import Icon from '@/components/Icon';
-import { FLAGS, type FlagEntry } from '@/data/flags';
 import { T } from '@/i18n/nl';
 import {
   buildMask,
@@ -15,11 +14,12 @@ import {
 } from '@/lib/hints';
 import { flagSrc } from '@/lib/flag-pool';
 import type { QuestionResult } from '@/lib/history';
-import { matchAnswer, normalize, type MatchCandidate } from '@/lib/matcher';
+import { matchAnswer, normalize } from '@/lib/matcher';
+import type { Candidates, Question } from '@/lib/question';
 
 type Status = 'asking' | 'wrong' | 'correct' | 'revealed';
 
-// How long a correct answer stays on screen before the next flag.
+// How long a correct answer stays on screen before the next question.
 const ADVANCE_DELAY_MS = 1100;
 
 // Often enough for a smooth countdown bar, rarely enough to stay cheap.
@@ -39,13 +39,6 @@ const CLS = {
   action:
     'inline-flex h-16 flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 text-xs font-semibold tracking-wider text-slate-700 uppercase hover:bg-slate-50 disabled:opacity-40',
 };
-
-// Every known answer, not just this round's, so a near-miss on a flag outside
-// the selection is still caught by the collision check.
-const CANDIDATES: MatchCandidate[] = FLAGS.map((flag) => ({
-  id: flag.code,
-  names: [flag.name, ...(flag.aliases ?? [])],
-}));
 
 /**
  * Keeps the round exactly as tall as the visible viewport. iOS Safari lays the
@@ -103,13 +96,26 @@ function Mask({ cells }: { cells: MaskCell[] }) {
   );
 }
 
-export default function FlagRound({
-  flags,
+/**
+ * One round of a typed-answer quiz: the question on a grey stage, the answer
+ * typed below it, with hints, a timer and an inline stop. The quiz draws the
+ * question itself through `prompt`; everything else is shared.
+ */
+export default function QuizRound({
+  questions,
+  candidates,
+  prompt,
+  placeholder,
   timeLimit,
   onFinish,
 }: {
-  flags: FlagEntry[];
-  /** Seconds per flag, or null for no limit. */
+  questions: Question[];
+  /** Every answer the quiz knows; each question's own candidate shares its id. */
+  candidates: Candidates;
+  /** What the player answers about: a flag, a country, a capital. */
+  prompt: (question: Question) => ReactNode;
+  placeholder: string;
+  /** Seconds per question, or null for no limit. */
   timeLimit: number | null;
   onFinish: (results: QuestionResult[]) => void;
 }) {
@@ -132,15 +138,16 @@ export default function FlagRound({
   const advanceTimer = useRef<number | null>(null);
   const height = useVisibleHeight();
 
-  const flag = flags[index]!;
-  const expected = CANDIDATES.find((candidate) => candidate.id === flag.code)!;
-  const cells = useMemo(() => buildMask(flag.name, hint, input), [flag.name, hint, input]);
+  const question = questions[index]!;
+  const expected = candidates.find((candidate) => candidate.id === question.id)!;
+  const answer = question.answer;
+  const cells = useMemo(() => buildMask(answer, hint, input), [answer, hint, input]);
   const done = status === 'correct' || status === 'revealed';
 
   useEffect(() => {
-    const following = flags[index + 1];
-    if (following) new Image().src = flagSrc(following.code);
-  }, [flags, index]);
+    const following = questions[index + 1]?.flag;
+    if (following) new Image().src = flagSrc(following);
+  }, [questions, index]);
 
   useEffect(
     () => () => {
@@ -149,7 +156,7 @@ export default function FlagRound({
     [],
   );
 
-  // The clock restarts per flag only; a wrong answer or a hint does not reset it.
+  // The clock restarts per question only; a wrong answer or a hint does not reset it.
   useEffect(() => {
     questionStart.current = Date.now();
     if (timeLimit !== null) setRemainingMs(timeLimit * 1000);
@@ -160,7 +167,7 @@ export default function FlagRound({
       setTimedOut(true);
       setStatus('revealed');
       finishQuestion({
-        id: flag.code,
+        id: question.id,
         outcome: 'missed',
         hints: hint.level,
         wrongTries,
@@ -189,7 +196,7 @@ export default function FlagRound({
   function advance(all: QuestionResult[] = results) {
     if (advanceTimer.current !== null) window.clearTimeout(advanceTimer.current);
     advanceTimer.current = null;
-    if (index + 1 >= flags.length) {
+    if (index + 1 >= questions.length) {
       onFinish(all);
       return;
     }
@@ -213,7 +220,7 @@ export default function FlagRound({
 
     const attempts = hint.level > 0 ? [input, maskText(cells)] : [input];
     const match = attempts
-      .map((attempt) => matchAnswer(attempt, expected, CANDIDATES))
+      .map((attempt) => matchAnswer(attempt, expected, candidates))
       .find((result) => result.correct);
 
     if (!match) {
@@ -228,7 +235,7 @@ export default function FlagRound({
     setApproximate(match.approximate);
     setBurst(burst + 1);
     const all = finishQuestion({
-      id: flag.code,
+      id: question.id,
       outcome: hint.level > 0 ? 'hinted' : 'clean',
       hints: hint.level,
       wrongTries,
@@ -242,13 +249,13 @@ export default function FlagRound({
       setInput('');
       setStatus('asking');
     }
-    setHint(nextHint(flag.name, hint));
+    setHint(nextHint(answer, hint));
     inputRef.current?.focus();
   }
 
   function reveal() {
     setStatus('revealed');
-    finishQuestion({ id: flag.code, outcome: 'missed', hints: hint.level, wrongTries });
+    finishQuestion({ id: question.id, outcome: 'missed', hints: hint.level, wrongTries });
   }
 
   function stop() {
@@ -278,13 +285,13 @@ export default function FlagRound({
       ? {
           tone: 'bg-emerald-600 text-white',
           icon: 'circle-check',
-          text: approximate ? T.quiz.correctAs(flag.name) : T.quiz.correct,
+          text: approximate ? T.quiz.correctAs(answer) : T.quiz.correct,
         }
       : status === 'revealed'
         ? {
             tone: 'bg-rose-600 text-white',
             icon: timedOut ? 'timer' : 'circle-x',
-            text: timedOut ? T.quiz.timedOut(flag.name) : T.quiz.revealed(flag.name),
+            text: timedOut ? T.quiz.timedOut(answer) : T.quiz.revealed(answer),
           }
         : status === 'wrong'
           ? { tone: 'bg-rose-600 text-white', icon: 'x', text: T.quiz.wrong }
@@ -300,9 +307,9 @@ export default function FlagRound({
         <div
           className="flex items-center gap-3"
           role="progressbar"
-          aria-label={T.quiz.progress(index + 1, flags.length)}
+          aria-label={T.quiz.progress(index + 1, questions.length)}
           aria-valuemin={1}
-          aria-valuemax={flags.length}
+          aria-valuemax={questions.length}
           aria-valuenow={index + 1}
         >
           <span className={`${CLS.barLabel} justify-start font-semibold text-slate-900`}>
@@ -311,11 +318,11 @@ export default function FlagRound({
           <div className={CLS.track}>
             <div
               className="bg-accent-700 h-full rounded-full transition-[width] duration-300"
-              style={{ width: `${(index / flags.length) * 100}%` }}
+              style={{ width: `${(index / questions.length) * 100}%` }}
             />
           </div>
           <span className={`${CLS.barLabel} justify-end font-medium text-slate-500`}>
-            {flags.length}
+            {questions.length}
           </span>
         </div>
 
@@ -344,13 +351,11 @@ export default function FlagRound({
         )}
       </header>
 
-      <div className="mt-5 flex min-h-0 flex-1 items-center justify-center border-y border-slate-200 bg-slate-50 p-6">
-        <img
-          key={flag.code}
-          src={flagSrc(flag.code)}
-          alt={T.quiz.flagAlt}
-          className="max-h-full max-w-full rounded object-contain shadow-md ring-1 ring-slate-900/10"
-        />
+      <div className="mt-5 flex min-h-0 flex-1 flex-col items-center justify-center gap-4 border-y border-slate-200 bg-slate-50 p-6">
+        {prompt(question)}
+        {done && question.note && (
+          <p className="max-w-sm text-center text-sm text-slate-600">{question.note}</p>
+        )}
       </div>
 
       <div className="relative flex flex-col gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -383,7 +388,7 @@ export default function FlagRound({
               setInput(event.target.value);
               if (status === 'wrong') setStatus('asking');
             }}
-            placeholder={T.quiz.placeholder}
+            placeholder={placeholder}
             autoFocus
             autoComplete="off"
             autoCorrect="off"
@@ -435,7 +440,7 @@ export default function FlagRound({
             <button
               type="button"
               onClick={takeHint}
-              disabled={done || !canHint(flag.name, hint)}
+              disabled={done || !canHint(answer, hint)}
               className={CLS.action}
             >
               <Icon name="lightbulb" className="h-6 w-6 text-amber-600" />

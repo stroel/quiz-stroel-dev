@@ -27,7 +27,7 @@ Twijfel je over architectuur: **stop en vraag het aan Steve**, of kijk in de doc
 2. Lees `CONVENTIONS.md` voor codestijl en patronen
 3. Lees `STYLEGUIDE.md` voor UI-conventies, en de skill `/quiz-design` (`.claude/skills/quiz-design/`) voor de layout van de quiz; waar ze botsen, wint de skill
 4. Lees de projectspecifieke docs die bij de huidige taak horen
-5. Lees `docs/vlaggen.md` voor je aan de vlaggenquiz of aan de matcher werkt
+5. Lees `docs/vlaggen.md` voor je aan de vlaggenquiz, de gedeelde quizschermen of de matcher werkt, en `docs/hoofdsteden.md` voor de hoofdsteden
 
 ## Bij het maken van wijzigingen
 
@@ -126,7 +126,8 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 
 ### Opbouw
 
-- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, later `/landen/` en `/spreuken/`).
+- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, `/hoofdsteden/`, later `/landen/` en `/spreuken/`), met een statisch overzicht op `<quiz>/overzicht/`.
+- Een quiz met getypte antwoorden is `src/components/quiz/QuizFlow.tsx` (instellen, ronde, eindscherm, historiek) met een dunne schil per quiz (`flags/FlagQuiz.tsx`, `capitals/CapitalQuiz.tsx`): die zegt wat ze selecteert, hoe dat vragen worden (`src/lib/question.ts`) en hoe een vraag eruitziet.
 - Herbruikbare logica staat in `src/lib/`: `matcher.ts` (typfouten), `hints.ts` (masker en letters), `history.ts` en `storage.ts` (localStorage). Een nieuwe quiz hergebruikt die en brengt alleen zijn dataset en schermen mee.
 - Elke quiz is één React-eiland met `client:only="react"`: alles wat het toont hangt af van `localStorage`.
 - Alle teksten staan in `src/i18n/nl.ts`.

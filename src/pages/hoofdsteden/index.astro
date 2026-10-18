@@ -1,0 +1,12 @@
+---
+// The capitals quiz is one React island. `client:only`: setup and history come from
+// localStorage, which the server cannot see, so rendering it on the server would
+// only produce markup that is replaced on load.
+import CapitalQuiz from '@/components/capitals/CapitalQuiz';
+import { T } from '@/i18n/nl';
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title={`${T.quizzes.hoofdsteden.title} · ${T.site.title}`}>
+  <CapitalQuiz client:only="react" />
+</Base>

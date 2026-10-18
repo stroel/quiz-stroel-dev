@@ -1,85 +1,41 @@
-import { useState } from 'react';
+import QuizFlow from '@/components/quiz/QuizFlow';
+import { FLAGS, type FlagEntry } from '@/data/flags';
+import { T } from '@/i18n/nl';
+import { flagSrc, selectFlags } from '@/lib/flag-pool';
+import type { Candidates, Question } from '@/lib/question';
 
-import FlagResults from '@/components/flags/FlagResults';
-import FlagRound from '@/components/flags/FlagRound';
-import FlagSetup from '@/components/flags/FlagSetup';
-import { REGIONS, type FlagEntry } from '@/data/flags';
-import { drawFlags, shuffle, type FlagSetup as Setup } from '@/lib/flag-pool';
-import { recordResults, type QuestionResult } from '@/lib/history';
-import { readJson, writeJson } from '@/lib/storage';
+// Every flag, not just this round's, so a near-miss on a flag outside the
+// selection is still caught by the collision check.
+const CANDIDATES: Candidates = FLAGS.map((flag) => ({
+  id: flag.code,
+  names: [flag.name, ...(flag.aliases ?? [])],
+}));
 
-const QUIZ = 'vlaggen';
-const SETUP_KEY = `quiz:${QUIZ}:setup`;
+function toQuestion(flag: FlagEntry): Question {
+  return { id: flag.code, answer: flag.name, flag: flag.code };
+}
 
-const DEFAULT_SETUP: Setup = {
-  regions: [...REGIONS],
-  microstates: false,
-  disputed: false,
-  territories: false,
-  organisations: false,
-  count: null,
-  timer: null,
-};
-
-type Phase =
-  | { name: 'setup' }
-  | { name: 'round'; flags: FlagEntry[]; round: number }
-  | { name: 'results'; flags: FlagEntry[]; results: QuestionResult[] };
-
-/** The flag → country quiz: setup, a round of flags, then the results. */
+/** The flag → country quiz. */
 export default function FlagQuiz() {
-  const [setup, setSetup] = useState<Setup>(() => ({
-    ...DEFAULT_SETUP,
-    ...readJson<Partial<Setup>>(SETUP_KEY, {}),
-  }));
-  const [phase, setPhase] = useState<Phase>({ name: 'setup' });
-
-  function start(flags: FlagEntry[]) {
-    window.scrollTo(0, 0);
-    // `round` remounts FlagRound even when the same flags are played again.
-    setPhase((current) => ({
-      name: 'round',
-      flags,
-      round: current.name === 'round' ? current.round + 1 : Date.now(),
-    }));
-  }
-
-  function finish(flags: FlagEntry[], results: QuestionResult[]) {
-    recordResults(QUIZ, results);
-    window.scrollTo(0, 0);
-    if (results.length === 0) setPhase({ name: 'setup' });
-    else setPhase({ name: 'results', flags, results });
-  }
-
-  switch (phase.name) {
-    case 'setup':
-      return (
-        <FlagSetup
-          initial={setup}
-          onStart={(chosen) => {
-            setSetup(chosen);
-            writeJson(SETUP_KEY, chosen);
-            start(drawFlags(chosen));
-          }}
+  return (
+    <QuizFlow
+      quiz="vlaggen"
+      overview="/vlaggen/overzicht/"
+      title={T.quizzes.vlaggen.title}
+      select={selectFlags}
+      extras={['microstates', 'disputed', 'territories', 'organisations']}
+      unit={T.units.flags}
+      questionsFor={(flags) => flags.map(toQuestion)}
+      candidates={CANDIDATES}
+      prompt={(question) => (
+        <img
+          key={question.id}
+          src={flagSrc(question.id)}
+          alt={T.quiz.flagAlt}
+          className="max-h-full min-h-0 max-w-full rounded object-contain shadow-md ring-1 ring-slate-900/10"
         />
-      );
-    case 'round':
-      return (
-        <FlagRound
-          key={phase.round}
-          flags={phase.flags}
-          timeLimit={setup.timer}
-          onFinish={(results) => finish(phase.flags, results)}
-        />
-      );
-    case 'results':
-      return (
-        <FlagResults
-          flags={phase.flags}
-          results={phase.results}
-          onRetry={(flags) => start(shuffle(flags))}
-          onAgain={() => setPhase({ name: 'setup' })}
-        />
-      );
-  }
+      )}
+      placeholder={T.quiz.placeholder}
+    />
+  );
 }

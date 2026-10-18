@@ -1,0 +1,32 @@
+---
+// Every flag with its name, per region: to read through before playing.
+import FlagThumb from '@/components/FlagThumb.astro';
+import Panel from '@/components/Panel.astro';
+import { T } from '@/i18n/nl';
+import Overview from '@/layouts/Overview.astro';
+import { overviewSections } from '@/lib/overview';
+
+const sections = overviewSections({ organisations: true });
+---
+
+<Overview quizTitle={T.quizzes.vlaggen.title} quizHref="/vlaggen/">
+  {sections.map((section) => (
+    <Panel collapsible title={section.title} aside={String(section.entries.length)}>
+      <ul class="divide-y divide-slate-200">
+        {section.entries.map((flag) => (
+          <li class="flex items-center gap-4 px-4 py-2.5">
+            <FlagThumb code={flag.code} caption={flag.name} />
+            <span class="flex flex-col">
+              <span class="font-medium">{flag.name}</span>
+              {flag.aliases && (
+                <span class="text-sm text-slate-500">
+                  {T.overview.aliases(flag.aliases.join(', '))}
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  ))}
+</Overview>

@@ -37,6 +37,14 @@
   --color-accent-800: var(--color-slate-900);
   --color-accent-900: var(--color-slate-700);
   --animate-shake: shake 0.35s ease-in-out;
+  --animate-pop: pop 0.18s ease-out;
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
 
   @keyframes shake {
     0%,

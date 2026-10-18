@@ -29,6 +29,13 @@ Er zijn geen punten. Per vlag wordt in `localStorage` (`quiz:vlaggen:history`) b
 vaak ze gezien, juist, met hints of gemist was, zodat later een modus "mijn zwakke vlaggen" kan
 volgen.
 
+## Overzicht
+
+`/vlaggen/overzicht/` (de knop **Overzicht** rechtsboven in het instelscherm) toont alle vlaggen
+met hun naam en aliassen, per regio en alfabetisch, en daarna de betwiste gebieden, de gebieden en
+de organisaties. Elke sectie staat ingeklapt; een tik op de titel klapt ze open. Een tik op een vlag toont ze
+groot, met de naam erboven; het kruisje rechtsboven of een tik ernaast sluit ze. Een statische pagina zonder eiland (`src/layouts/Overview.astro`).
+
 ## Indeling
 
 De dataset staat in `src/data/flags.ts`, met de namen voluit. `Intl.DisplayNames` geeft namen als

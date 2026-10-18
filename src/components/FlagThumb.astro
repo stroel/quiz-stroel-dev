@@ -1,0 +1,27 @@
+---
+// A small flag in an overview list. Tapping it opens the flag large in the
+// overview's dialog (see Overview.astro), with `caption` underneath.
+import { T } from '@/i18n/nl';
+import { flagSrc } from '@/lib/flag-pool';
+
+interface Props {
+  code: string;
+  caption: string;
+}
+const { code, caption } = Astro.props;
+---
+
+<button
+  type="button"
+  data-zoom={flagSrc(code)}
+  data-caption={caption}
+  aria-label={T.overview.zoom(caption)}
+  class="shrink-0 rounded-sm transition-transform active:scale-95"
+>
+  <img
+    src={flagSrc(code)}
+    alt=""
+    loading="lazy"
+    class="h-12 w-16 rounded-sm object-contain ring-1 ring-slate-900/10"
+  />
+</button>

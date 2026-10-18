@@ -1,17 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import Icon from '@/components/Icon';
 import Panel from '@/components/Panel';
-import { FLAGS, REGIONS } from '@/data/flags';
+import CheckRow from '@/components/quiz/CheckRow';
+import { FLAGS, REGIONS, type FlagEntry } from '@/data/flags';
 import { T } from '@/i18n/nl';
-import { selectFlags, type FlagSetup as Setup } from '@/lib/flag-pool';
+import type { FlagSetup as Setup } from '@/lib/flag-pool';
 
 // What a field starts at when its switch is turned on.
 const DEFAULT_COUNT = 10;
 const DEFAULT_TIMER = 20;
 const MAX_TIMER = 600;
 
-type ExtraKey = 'microstates' | 'disputed' | 'territories' | 'organisations';
+export type ExtraKey = 'microstates' | 'disputed' | 'territories' | 'organisations';
 
 // Each extra with a few flags that show what it adds. Codes, not names, so the
 // examples always match the dataset.
@@ -69,54 +70,31 @@ function parseCount(text: string, max: number): number | null {
   return Number.isFinite(value) && value > 0 ? Math.min(value, max) : null;
 }
 
-/** One option in a panel: a full-width row with a check box at the right. */
-function CheckRow({
-  on,
-  label,
-  detail,
-  count,
-  onClick,
-}: {
-  on: boolean;
-  label: string;
-  /** A second, smaller line under the label. */
-  detail?: string;
-  count?: number;
-  onClick: () => void;
-}) {
-  return (
-    <li>
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={on}
-        onClick={onClick}
-        className="flex min-h-12 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50"
-      >
-        <span className="flex flex-1 flex-col">
-          <span className="font-medium">{label}</span>
-          {detail && <span className="text-sm text-slate-500">{detail}</span>}
-        </span>
-        {count !== undefined && (
-          <span className="text-sm text-slate-400 tabular-nums">{count}</span>
-        )}
-        <span
-          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-            on ? 'border-accent-700 bg-accent-700 text-white' : 'border-slate-300 bg-white'
-          }`}
-        >
-          {on && <Icon name="check" className="h-4 w-4" />}
-        </span>
-      </button>
-    </li>
-  );
-}
-
-export default function FlagSetup({
+/**
+ * The setup screen every quiz shares: regions, extras, count and timer. A quiz
+ * passes how it selects its pool, which extras apply to it, and optionally a
+ * panel of its own above the regions.
+ */
+export default function QuizSetup({
+  title,
   initial,
+  select,
+  extras,
+  unit,
+  before,
+  overview,
   onStart,
 }: {
+  title: string;
   initial: Setup;
+  /** The entries a setup plays; drives every count on the screen. */
+  select: (setup: Setup) => FlagEntry[];
+  extras: ExtraKey[];
+  /** "vlaggen", "landen": the word after a count. */
+  unit: (count: number) => string;
+  before?: ReactNode;
+  /** Link to the page that lists every question with its answer. */
+  overview?: string;
   onStart: (setup: Setup) => void;
 }) {
   const [setup, setSetup] = useState<Setup>(initial);
@@ -125,17 +103,16 @@ export default function FlagSetup({
   const [timerOn, setTimerOn] = useState(initial.timer !== null);
   const [timerText, setTimerText] = useState(String(initial.timer ?? DEFAULT_TIMER));
 
-  const available = useMemo(() => selectFlags(setup).length, [setup]);
+  const available = useMemo(() => select(setup).length, [select, setup]);
   const regionCounts = useMemo(
     () =>
       Object.fromEntries(
         REGIONS.map((region) => [
           region,
-          selectFlags({ ...setup, regions: [region], microstates: false, organisations: false })
-            .length,
+          select({ ...setup, regions: [region], microstates: false, organisations: false }).length,
         ]),
       ),
-    [setup],
+    [select, setup],
   );
 
   const count = countOn ? parseCount(countText, available) : null;
@@ -166,10 +143,21 @@ export default function FlagSetup({
         >
           <Icon name="arrow-left" />
         </a>
-        <h1 className="text-2xl font-bold tracking-tight">{T.quizzes.vlaggen.title}</h1>
+        <h1 className="flex-1 text-2xl font-bold tracking-tight">{title}</h1>
+        {overview && (
+          <a
+            href={overview}
+            className="inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            <Icon name="book-open" />
+            {T.overview.open}
+          </a>
+        )}
       </header>
 
       <main className="flex flex-1 flex-col gap-4 p-4 pb-32">
+        {before}
+
         <Panel
           title={T.setup.regions}
           action={
@@ -197,7 +185,7 @@ export default function FlagSetup({
 
         <Panel title={T.setup.extra}>
           <ul className="divide-y divide-slate-200">
-            {EXTRAS.map(({ key, examples }) => (
+            {EXTRAS.filter(({ key }) => extras.includes(key)).map(({ key, examples }) => (
               <CheckRow
                 key={key}
                 on={setup[key]}
@@ -224,7 +212,7 @@ export default function FlagSetup({
                     onChange={(event) => setCountText(event.target.value)}
                     className={CLS.field}
                   />
-                  <span className="text-slate-500">{T.setup.countUnit(count ?? 0)}</span>
+                  <span className="text-slate-500">{unit(count ?? 0)}</span>
                 </label>
               )}
             </div>
@@ -259,7 +247,7 @@ export default function FlagSetup({
             className="bg-accent-800 hover:bg-accent-900 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-lg font-semibold text-white"
           >
             <Icon name="play" />
-            {T.setup.start(playing)}
+            {T.setup.start(playing, unit(playing))}
           </button>
         )}
       </footer>

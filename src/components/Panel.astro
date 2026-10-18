@@ -1,0 +1,39 @@
+---
+// The server-side twin of Panel.tsx: a framed section with a grey title bar.
+// Keep the classes of the two in step. `collapsible` turns it into a native
+// <details>: closed until the title bar is tapped, and it works without script.
+import Icon from '@/components/Icon.astro';
+
+interface Props {
+  title: string;
+  /** Small text at the right end of the title bar. */
+  aside?: string;
+  collapsible?: boolean;
+}
+const { title, aside, collapsible = false } = Astro.props;
+const bar =
+  'flex min-h-12 items-center justify-between gap-3 bg-slate-100 px-4 text-sm font-semibold text-slate-600';
+---
+
+{collapsible ? (
+  <details class="group overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <summary
+      class={`${bar} cursor-pointer list-none group-open:border-b group-open:border-slate-200 hover:bg-slate-200/60 [&::-webkit-details-marker]:hidden`}
+    >
+      <h2>{title}</h2>
+      <span class="flex items-center gap-2 font-normal text-slate-400 tabular-nums">
+        {aside}
+        <Icon name="chevron-down" class="h-5 w-5 transition-transform group-open:rotate-180" />
+      </span>
+    </summary>
+    <slot />
+  </details>
+) : (
+  <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <div class={`${bar} min-h-10 border-b border-slate-200`}>
+      <h2>{title}</h2>
+      {aside && <span class="font-normal text-slate-400 tabular-nums">{aside}</span>}
+    </div>
+    <slot />
+  </section>
+)}

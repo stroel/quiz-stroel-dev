@@ -1,9 +1,9 @@
 import Icon from '@/components/Icon';
 import Panel from '@/components/Panel';
-import type { FlagEntry } from '@/data/flags';
 import { T } from '@/i18n/nl';
 import { flagSrc } from '@/lib/flag-pool';
 import type { QuestionResult } from '@/lib/history';
+import type { Question } from '@/lib/question';
 
 function Stat({ value, label, tone }: { value: number; label: string; tone: string }) {
   return (
@@ -14,20 +14,22 @@ function Stat({ value, label, tone }: { value: number; label: string; tone: stri
   );
 }
 
-function FlagList({ title, flags }: { title: string; flags: FlagEntry[] }) {
-  if (flags.length === 0) return null;
+function QuestionList({ title, questions }: { title: string; questions: Question[] }) {
+  if (questions.length === 0) return null;
   return (
     <Panel title={title}>
       <ul className="divide-y divide-slate-200">
-        {flags.map((flag) => (
-          <li key={flag.code} className="flex items-center gap-4 px-4 py-2.5">
-            <img
-              src={flagSrc(flag.code)}
-              alt=""
-              loading="lazy"
-              className="h-9 w-12 shrink-0 rounded-sm object-contain ring-1 ring-slate-900/10"
-            />
-            <span className="font-medium">{flag.name}</span>
+        {questions.map((question) => (
+          <li key={question.id} className="flex min-h-14 items-center gap-4 px-4 py-2.5">
+            {question.flag && (
+              <img
+                src={flagSrc(question.flag)}
+                alt=""
+                loading="lazy"
+                className="h-9 w-12 shrink-0 rounded-sm object-contain ring-1 ring-slate-900/10"
+              />
+            )}
+            <span className="font-medium">{question.label ?? question.answer}</span>
           </li>
         ))}
       </ul>
@@ -35,20 +37,21 @@ function FlagList({ title, flags }: { title: string; flags: FlagEntry[] }) {
   );
 }
 
-export default function FlagResults({
-  flags,
+/** The end of a round: totals, and the questions that were missed or needed hints. */
+export default function QuizResults({
+  questions,
   results,
   onRetry,
   onAgain,
 }: {
-  flags: FlagEntry[];
+  questions: Question[];
   results: QuestionResult[];
-  onRetry: (flags: FlagEntry[]) => void;
+  onRetry: (questions: Question[]) => void;
   onAgain: () => void;
 }) {
-  const byCode = new Map(flags.map((flag) => [flag.code, flag]));
+  const byId = new Map(questions.map((question) => [question.id, question]));
   const pick = (outcome: QuestionResult['outcome']) =>
-    results.filter((r) => r.outcome === outcome).flatMap((r) => byCode.get(r.id) ?? []);
+    results.filter((r) => r.outcome === outcome).flatMap((r) => byId.get(r.id) ?? []);
 
   const missed = pick('missed');
   const hinted = pick('hinted');
@@ -91,8 +94,8 @@ export default function FlagResults({
           </p>
         </section>
 
-        <FlagList title={T.end.misses} flags={missed} />
-        <FlagList title={T.end.hintedList} flags={hinted} />
+        <QuestionList title={T.end.misses} questions={missed} />
+        <QuestionList title={T.end.hintedList} questions={hinted} />
       </main>
 
       <footer className="fixed inset-x-0 bottom-0 mx-auto flex max-w-xl flex-col gap-2 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
@@ -111,7 +114,7 @@ export default function FlagResults({
           onClick={onAgain}
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white font-medium text-slate-700 hover:bg-slate-50"
         >
-          <Icon name="flag" />
+          <Icon name="play" />
           {T.end.again}
         </button>
       </footer>

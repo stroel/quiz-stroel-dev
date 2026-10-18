@@ -1,0 +1,40 @@
+---
+// Every country with its capital, per region: to read through before playing.
+import FlagThumb from '@/components/FlagThumb.astro';
+import Panel from '@/components/Panel.astro';
+import { T } from '@/i18n/nl';
+import Overview from '@/layouts/Overview.astro';
+import { capitalOf } from '@/lib/capital-pool';
+import { overviewSections } from '@/lib/overview';
+
+const sections = overviewSections({ organisations: false }, (flag) => !!capitalOf(flag.code));
+---
+
+<Overview quizTitle={T.quizzes.hoofdsteden.title} quizHref="/hoofdsteden/">
+  {sections.map((section) => (
+    <Panel collapsible title={section.title} aside={String(section.entries.length)}>
+      <ul class="divide-y divide-slate-200">
+        {section.entries.map((flag) => {
+          const capital = capitalOf(flag.code)!;
+          return (
+            <li class="flex items-center gap-4 px-4 py-2.5">
+              <FlagThumb code={flag.code} caption={`${flag.name}: ${capital.name}`} />
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="flex flex-wrap items-baseline justify-between gap-x-3">
+                  <span class="text-slate-500">{flag.name}</span>
+                  <span class="font-semibold">{capital.name}</span>
+                </span>
+                {capital.alsoAccepted && (
+                  <span class="text-sm text-slate-500">
+                    {T.overview.alsoAccepted(capital.alsoAccepted.join(', '))}
+                  </span>
+                )}
+                {capital.note && <span class="text-sm text-slate-500">{capital.note}</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  ))}
+</Overview>

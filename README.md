@@ -6,8 +6,13 @@ startpagina laat je een quiz kiezen:
 - **Vlaggen** (`/vlaggen/`): je krijgt een vlag te zien en tikt het land. Typfouten en spelling op
   het gehoor worden aanvaard. Er zijn hints met een masker en losse letters, en een eindscherm
   zonder punten. Zie [`docs/vlaggen.md`](docs/vlaggen.md).
+- **Hoofdsteden** (`/hoofdsteden/`): je ziet een land en tikt de hoofdstad, of omgekeerd. Zie
+  [`docs/hoofdsteden.md`](docs/hoofdsteden.md).
 - **Landen** (`/landen/`): kaartquiz. Binnenkort.
 - **Spreuken** (`/spreuken/`): wie zei het? Binnenkort.
+
+Elke quiz heeft een **Overzicht** (`/vlaggen/overzicht/`, `/hoofdsteden/overzicht/`) met alle
+vragen en antwoorden per regio, om door te scrollen.
 
 Er is geen backend. Je instellingen en historiek staan in `localStorage` van het toestel.
 

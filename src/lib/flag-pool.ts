@@ -44,11 +44,6 @@ export function shuffle<T>(items: readonly T[], random = Math.random): T[] {
   return copy;
 }
 
-export function drawFlags(setup: FlagSetup): FlagEntry[] {
-  const shuffled = shuffle(selectFlags(setup));
-  return setup.count === null ? shuffled : shuffled.slice(0, setup.count);
-}
-
 /** Flag SVGs are copied from flag-icons into `public/flags/` by the flag-assets integration. */
 export function flagSrc(code: string): string {
   return `/flags/${code}.svg`;

@@ -1,0 +1,81 @@
+---
+// A cheat sheet for one quiz: every question with its answer, in a folded
+// panel per section that opens on a tap. Static HTML, no island: there is
+// nothing to remember here.
+import Icon from '@/components/Icon.astro';
+import { T } from '@/i18n/nl';
+import Base from '@/layouts/Base.astro';
+
+interface Props {
+  quizTitle: string;
+  /** The quiz this sheet belongs to; the back arrow returns there. */
+  quizHref: string;
+}
+const { quizTitle, quizHref } = Astro.props;
+---
+
+<Base title={`${T.overview.title} · ${quizTitle} · ${T.site.title}`}>
+  <div class="mx-auto flex min-h-dvh max-w-xl flex-col">
+    <header class="border-b border-slate-200 bg-white">
+      <div class="flex items-center gap-2 px-2 py-3">
+        <a
+          href={quizHref}
+          aria-label={T.overview.back}
+          class="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+        >
+          <Icon name="arrow-left" />
+        </a>
+        <h1 class="text-2xl font-bold tracking-tight">{quizTitle}</h1>
+        <span class="text-2xl font-bold tracking-tight text-slate-400">{T.overview.title}</span>
+      </div>
+    </header>
+
+    <main class="flex flex-col gap-4 p-4 pb-12">
+      <slot />
+    </main>
+  </div>
+
+  <dialog
+    id="flag-zoom"
+    aria-labelledby="flag-zoom-title"
+    tabindex="-1"
+    class="open:animate-pop m-auto outline-none w-[min(36rem,calc(100vw-2rem))] overflow-hidden rounded-xl bg-white p-0 shadow-2xl backdrop:bg-slate-900/60"
+  >
+    <header class="relative flex min-h-14 items-center justify-center border-b border-slate-200 px-14 py-3">
+      <h2 id="flag-zoom-title" data-caption class="text-center text-lg font-semibold"></h2>
+      <form method="dialog" class="absolute top-1/2 right-2 -translate-y-1/2">
+        <button
+          aria-label={T.overview.close}
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+        >
+          <Icon name="x" class="h-6 w-6" />
+        </button>
+      </form>
+    </header>
+    <div class="bg-slate-50 p-6">
+      <img alt="" class="w-full rounded object-contain shadow-md ring-1 ring-slate-900/10" />
+    </div>
+  </dialog>
+
+  <script>
+    // One dialog for the whole page: a tap on any small flag fills it and opens
+    // it. The close button, a tap on the backdrop and Escape close it.
+    const dialog = document.querySelector<HTMLDialogElement>('#flag-zoom');
+    const image = dialog?.querySelector('img');
+    const caption = dialog?.querySelector('[data-caption]');
+
+    document.addEventListener('click', (event) => {
+      if (!dialog || !image || !caption) return;
+      const trigger = (event.target as Element).closest<HTMLElement>('[data-zoom]');
+      if (trigger) {
+        image.src = trigger.dataset.zoom ?? '';
+        caption.textContent = trigger.dataset.caption ?? '';
+        dialog.showModal();
+        // Focus the dialog, not its close button, so no focus ring greets the player.
+        dialog.focus();
+      } else if (event.target === dialog) {
+        dialog.close();
+      }
+    });
+  </script>
+</Base>
