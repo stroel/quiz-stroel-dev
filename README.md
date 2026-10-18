@@ -51,3 +51,17 @@ custom domain `quiz.stroel.dev` wordt bij de eerste deploy aangemaakt. Eenmalig:
 
 1. Kopieer `.env.example` naar `.env`; die zet `CLOUDFLARE_ACCOUNT_ID`.
 2. Draai `pnpm deploy`.
+
+## Nachtelijke dependency-update
+
+`.github/workflows/nightly-dependency-update.yml` draait elke nacht om 04:00 UTC (en manueel via
+**Run workflow**): `pnpm update` en `pnpm run format`, de [Stack](#stack)-tabel bijwerken met
+`scripts/sync-readme-versions.mjs`, daarna `pnpm run typecheck` en `pnpm run build`. Breekt een
+van beide, dan probeert Claude het te herstellen. Majors worden niet toegepast maar gemeld in de
+PR-body (`scripts/check-major-updates.mjs`). Alles komt in één PR op
+`chore/nightly-dependency-update`, die bijgewerkt wordt zolang ze openstaat.
+
+De workflow is een kopie uit `stroel-claude-conventions` (`workflows/`), met twee aanpassingen:
+de stap voor `GH_PACKAGES_TOKEN` is weg (geen private `@stroel/*`-packages) en
+`show_full_output` is weg, omdat deze repo publiek is. Wat er per repo ingesteld moet worden, staat
+in de README van `stroel-claude-conventions` onder _GitHub Actions-workflows_.

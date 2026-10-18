@@ -1,0 +1,252 @@
+name: Nightly Dependency Update
+
+# House nightly dependency workflow. Runs pnpm update + formatting, syncs the
+# README Stack table, verifies the typecheck and the production build, and
+# opens a single PR.
+#
+# Design rules (learned the hard way — see the "Failure modes" notes below):
+#
+# 1. The README version sync is a deterministic script, not an LLM step. It is a
+#    verbatim copy of package.json values; there is no judgement in it. An LLM
+#    step here cost ~$0.11 a night per project and failed intermittently on API
+#    errors, taking the whole dependency update down with it.
+# 2. Claude is used only where the outcome genuinely can't be predicted: fixing
+#    a typecheck or a build that a dependency upgrade broke.
+# 3. Every non-essential step is `continue-on-error`: format, the README sync,
+#    the major check, the typecheck, the build, Claude's fix and the two
+#    re-checks after it, and the app token. Even a broken build does not lose
+#    the night — the PR still
+#    opens, flagged, so a human decides. Format is non-essential because a
+#    failed format leaves the tree unformatted, not wrong: the update is still
+#    worth a PR, and the body says to run `pnpm run format` before merging. The
+#    essential steps deliberately are NOT `continue-on-error`, because without
+#    their result there is nothing to open a PR about: checkout, pnpm/Node
+#    setup, the GH_PACKAGES_TOKEN line, install, `pnpm update` (retried instead,
+#    rule 5), "Check for changes" (every later step is gated on its output),
+#    and opening the PR itself. The workflow-edit guard after
+#    Claude's fix is not `continue-on-error` either: failing the job is what
+#    it is for (rule 6).
+# 4. Major upgrades are reported, never applied. `pnpm update` stays inside the
+#    declared range by design; crossing a major is a deliberate, tested change.
+#    Known gap: the report rides along in the PR body, so a night with no
+#    in-range changes opens no PR and shows no majors. They surface on the next
+#    PR instead. Fine while updates are frequent; revisit if a repo goes quiet.
+# 5. `pnpm update` is retried, because the failure it hits is upstream and
+#    temporary. A monorepo release publishes ~30 packages one at a time, and
+#    between the first and the last the registry describes a version that
+#    cannot be installed. On 2026-09-03 `@tiptap/starter-kit@3.31.1` was
+#    published at 08:46:36Z and its own `@tiptap/extension-code@3.31.1` at
+#    08:49:39Z; the nightly resolved at 08:49:18Z and died with
+#    ERR_PNPM_NO_MATCHING_VERSION, 21 seconds short. Nothing was wrong with the
+#    repo — re-running the identical job later passed untouched. It is one of
+#    the essential steps that must not be `continue-on-error` (rule 3): without
+#    an update there is nothing to open a PR about. Retrying is how it survives
+#    instead.
+# 6. The nightly never edits `.github/workflows/`. Nothing it runs is meant to:
+#    `pnpm update` touches manifests and the lockfile, format globs source
+#    files only, the README sync touches the README. The one step that could is
+#    Claude's build fix, which runs with bypassPermissions and no tool
+#    restrictions. The rule is stated in its prompt, and it is enforced by the
+#    step right after it, "Refuse workflow edits from the build fix": if
+#    anything under .github/workflows/ differs from the checked-out commit
+#    (committed or not) or is untracked there,
+#    the job fails and no PR opens. That step is not `continue-on-error`; a
+#    prompt is a request, and a model that ignored it must not get a PR.
+#    A workflow change is a change to what CI is allowed to do, and nobody
+#    reviews that at 04:00. GitHub also refuses to push one with a token that
+#    lacks the `workflows` permission — GITHUB_TOKEN never has it, and the
+#    nightly app is set up with Contents and Pull requests only — so the PR
+#    push would fail and take the night with it.
+#
+# GitHub Actions cron is UTC. 04:00 UTC is 05:00-06:00 Europe/Brussels
+# depending on daylight saving time.
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  update-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - run: pnpm install --no-frozen-lockfile
+      # -r so workspace members are updated too. Without it only the root
+      # package.json is touched, and in a workspace almost every runtime
+      # dependency lives in apps/* and packages/*. Inert in a single-app repo.
+      #
+      # Retried, because the registry is briefly inconsistent while a monorepo
+      # publishes: a release lands one package at a time, so for a few minutes
+      # a new version can depend on a sibling version that is not there yet.
+      # Attempts at 0s, 2min and 6min span that window. See design rule 5.
+      - name: Update dependencies
+        run: |
+          for attempt in 1 2 3; do
+            if pnpm update -r; then exit 0; fi
+            if [ "$attempt" -eq 3 ]; then break; fi
+            delay=$((attempt * 120))
+            echo "::warning::pnpm update failed (attempt $attempt/3) - retrying in ${delay}s; the registry may be mid-publish"
+            sleep "$delay"
+          done
+          exit 1
+
+      # Non-essential (design rule 3): a formatter that fails leaves the tree
+      # unformatted, not wrong, so the update still ships and the PR body says so.
+      - name: Format
+        id: format
+        continue-on-error: true
+        run: pnpm run format
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Deterministic: rewrites only Version cells that already hold a version.
+      # Exits non-zero on an unresolvable table row, which is a real (and rare)
+      # signal — but it must not cost us the dependency update, hence
+      # continue-on-error plus a status line in the PR body.
+      - name: Sync README version numbers
+        if: steps.changes.outputs.changed == 'true'
+        id: readme_sync
+        continue-on-error: true
+        run: node scripts/sync-readme-versions.mjs
+
+      # `pnpm update` never crosses a major range, so majors would stay invisible.
+      # Surfaced in the PR body rather than acted on: each major needs its own PR.
+      - name: Check for major upgrades
+        if: steps.changes.outputs.changed == 'true'
+        id: majors
+        continue-on-error: true
+        run: |
+          {
+            echo 'report<<NIGHTLY_EOF'
+            node scripts/check-major-updates.mjs
+            echo 'NIGHTLY_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # Before the build, not after: a dependency that breaks types without
+      # breaking the bundle is exactly what a build alone lets through. The
+      # typecheck script fails loudly when @astrojs/check cannot load (see
+      # CONVENTIONS.md, "CI & hosting"), so a pass here means the check ran.
+      - name: Typecheck (verification)
+        if: steps.changes.outputs.changed == 'true'
+        id: typecheck
+        continue-on-error: true
+        run: pnpm run typecheck
+
+      - name: Build (verification)
+        if: steps.changes.outputs.changed == 'true'
+        id: build
+        continue-on-error: true
+        run: pnpm run build
+
+      # The one step where an LLM earns its place: a dependency upgrade broke
+      # the build and the fix requires reading the error and the diff.
+      - name: Ask Claude to fix the broken build
+        if: steps.changes.outputs.changed == 'true' && (steps.typecheck.outcome == 'failure' || steps.build.outcome == 'failure')
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: '--permission-mode bypassPermissions'
+          # Private repos only: makes a failing run diagnosable instead of
+          # reporting a bare `is_error: true`.
+          prompt: |
+            The nightly dependency update (`pnpm update` + `pnpm run format`) broke
+            the typecheck (`pnpm run typecheck`), the production build
+            (`pnpm run build`), or both. Investigate the errors and the diff in
+            package.json / pnpm-lock.yaml, then fix the source code so both pass
+            again. Do not change dependency versions unless a
+            package genuinely requires it to remain compatible. Follow the
+            existing code style and conventions in this repo. Never create, edit or
+            delete anything under `.github/workflows/`, even if the fix seems to call
+            for it; if the build can only be fixed there, leave the build broken and
+            say so. When done, run `pnpm run typecheck` and `pnpm run build` again to
+            confirm both pass.
+
+      # Enforces design rule 6. The prompt above asks; this step checks. Nothing
+      # else in the job touches .github/workflows/, so any difference from the
+      # checked-out commit here is Claude's. Compared with CHECKOUT_SHA rather
+      # than HEAD so that an edit Claude committed is caught as well as one it
+      # left in the tree. Deliberately NOT continue-on-error: a run whose fix
+      # edited a workflow file must not get a pull request.
+      - name: Refuse workflow edits from the build fix
+        if: steps.changes.outputs.changed == 'true' && (steps.typecheck.outcome == 'failure' || steps.build.outcome == 'failure')
+        env:
+          CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          if git diff --quiet "$CHECKOUT_SHA" -- .github/workflows && test -z "$(git ls-files --others --exclude-standard .github/workflows)"; then
+            exit 0
+          fi
+          git status --short -- .github/workflows
+          echo "::error::The build fix changed files under .github/workflows/. The nightly never edits workflows (design rule 6), so no pull request is opened."
+          exit 1
+
+      - name: Re-check typecheck after Claude's fix
+        if: steps.changes.outputs.changed == 'true' && (steps.typecheck.outcome == 'failure' || steps.build.outcome == 'failure')
+        id: typecheck_retry
+        continue-on-error: true
+        run: pnpm run typecheck
+
+      - name: Re-check build after Claude's fix
+        if: steps.changes.outputs.changed == 'true' && (steps.typecheck.outcome == 'failure' || steps.build.outcome == 'failure')
+        id: build_retry
+        continue-on-error: true
+        run: pnpm run build
+
+      - name: Mint an app token for the pull request
+        id: pr_token
+        # A missing installation is not a reason to lose the night. The app lives on
+        # the stroel account and has to be installed on every other account by hand;
+        # on 14 September 2026 two stroel-vvk repos had the variable and the key but
+        # no installation, and this step failed the whole job. Without a token the
+        # pull request below opens with GITHUB_TOKEN, and its body says so.
+        continue-on-error: true
+        if: steps.changes.outputs.changed == 'true' && vars.NIGHTLY_APP_ID != ''
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.NIGHTLY_APP_ID }}
+          private-key: ${{ secrets.NIGHTLY_APP_PRIVATE_KEY }}
+
+      - name: Open pull request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          # A pull request opened with GITHUB_TOKEN is authored by github-actions[bot],
+          # and GitHub parks every workflow run on such a pull request at
+          # action_required: the PR build then waits for a click nobody is there to
+          # give at 04:00. An app token gives the pull request a real author, so its
+          # build runs on its own. Falls back to GITHUB_TOKEN where the app is not
+          # installed yet, which still opens the PR.
+          token: ${{ steps.pr_token.outputs.token || github.token }}
+          commit-message: 'chore: nightly dependency update'
+          title: 'chore: nightly dependency update'
+          body: |
+            Automated nightly run of `pnpm update` + `pnpm run format`.
+
+            Typecheck: ${{ (steps.typecheck.outcome == 'success' || steps.typecheck_retry.outcome == 'success') && '✅ passed' || '❌ still failing — see the workflow log' }}
+            Build verification: ${{ (steps.build.outcome == 'success' || steps.build_retry.outcome == 'success') && '✅ passed' || '❌ still failing — review carefully before merging' }}
+            README version sync: ${{ steps.readme_sync.outcome == 'success' && '✅ ran' || '⚠️ failed — check the Stack table manually' }}
+            Formatting: ${{ steps.format.outcome == 'success' && '✅ ran' || '⚠️ failed — run pnpm run format before merging' }}
+            ${{ steps.pr_token.outcome == 'failure' && '⚠️ App token could not be minted — this pull request is authored by github-actions[bot] and its checks wait for approval. Is the nightly app installed on this repository?' || '' }}
+
+            ${{ steps.majors.outputs.report }}
+          branch: chore/nightly-dependency-update
+          delete-branch: true
