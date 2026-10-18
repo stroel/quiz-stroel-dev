@@ -68,16 +68,16 @@ function Mask({ cells }: { cells: MaskCell[] }) {
         <div key={w} className="flex gap-1">
           {word.map((cell, c) =>
             cell.kind === 'fixed' ? (
-              <span key={c} className="flex h-9 w-3 items-end justify-center text-xl font-bold">
+              <span key={c} className="flex h-9 w-3 items-end justify-center text-xl font-semibold">
                 {cell.char}
               </span>
             ) : (
               <span
                 key={c}
-                className={`flex h-9 w-6 items-end justify-center border-b-2 pb-0.5 text-xl font-bold uppercase ${
+                className={`flex h-9 w-6 items-end justify-center border-b-2 pb-0.5 text-xl font-semibold uppercase ${
                   cell.kind === 'revealed'
-                    ? 'border-amber-500 text-amber-600 dark:text-amber-400'
-                    : 'border-slate-400 text-slate-900 dark:border-slate-500 dark:text-slate-100'
+                    ? 'border-accent-700 text-accent-800'
+                    : 'border-stone-300 text-stone-900'
                 }`}
               >
                 {cell.char}
@@ -244,23 +244,23 @@ export default function FlagRound({
   const feedback =
     status === 'correct'
       ? {
-          tone: 'text-emerald-600 dark:text-emerald-400',
+          tone: 'text-emerald-700',
           icon: 'circle-check',
           text: approximate ? T.quiz.correctAs(flag.name) : T.quiz.correct,
         }
       : status === 'revealed'
         ? {
-            tone: 'text-rose-600 dark:text-rose-400',
+            tone: 'text-rose-700',
             icon: 'circle-x',
             text: timedOut ? T.quiz.timedOut(flag.name) : T.quiz.revealed(flag.name),
           }
         : status === 'wrong'
-          ? { tone: 'text-rose-600 dark:text-rose-400', icon: 'x', text: T.quiz.wrong }
+          ? { tone: 'text-rose-700', icon: 'x', text: T.quiz.wrong }
           : null;
 
   return (
     <div
-      className="mx-auto flex h-dvh max-w-xl flex-col overflow-hidden"
+      className="mx-auto flex h-dvh max-w-xl flex-col overflow-hidden bg-white"
       style={height === null ? undefined : { height: `${height}px` }}
     >
       <header className="flex items-center gap-3 px-4 pt-3">
@@ -268,17 +268,17 @@ export default function FlagRound({
           type="button"
           onClick={stop}
           aria-label={T.quiz.stop}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100"
         >
           <Icon name="x" />
         </button>
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200">
           <div
-            className="h-full rounded-full bg-slate-900 transition-[width] duration-300 dark:bg-white"
+            className="bg-accent-700 h-full rounded-full transition-[width] duration-300"
             style={{ width: `${(index / flags.length) * 100}%` }}
           />
         </div>
-        <span className="shrink-0 text-sm font-medium text-slate-500 tabular-nums dark:text-slate-400">
+        <span className="shrink-0 text-sm font-medium text-stone-500 tabular-nums">
           {T.quiz.progress(index + 1, flags.length)}
         </span>
       </header>
@@ -288,10 +288,10 @@ export default function FlagRound({
           <span className="flex w-11 shrink-0 justify-center">
             <Icon
               name="timer"
-              className={`h-5 w-5 ${warning ? 'text-rose-500' : 'text-slate-400'}`}
+              className={`h-5 w-5 ${warning ? 'text-rose-600' : 'text-stone-400'}`}
             />
           </span>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200">
             <div
               className={`h-full rounded-full ${warning ? 'bg-rose-500' : 'bg-amber-500'}`}
               style={{ width: `${(remainingMs / (timeLimit * 1000)) * 100}%` }}
@@ -299,7 +299,7 @@ export default function FlagRound({
           </div>
           <span
             className={`w-12 shrink-0 text-right text-sm font-semibold tabular-nums ${
-              warning ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'
+              warning ? 'text-rose-700' : 'text-stone-500'
             }`}
           >
             {T.quiz.secondsLeft(Math.ceil(remainingMs / 1000))}
@@ -307,16 +307,16 @@ export default function FlagRound({
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 items-center justify-center p-4">
+      <div className="mt-2 flex min-h-0 flex-1 items-center justify-center border-y border-stone-200 bg-stone-50 p-6">
         <img
           key={flag.code}
           src={flagSrc(flag.code)}
           alt={T.quiz.flagAlt}
-          className="max-h-full max-w-full rounded-lg object-contain shadow-lg ring-1 ring-slate-900/10 dark:ring-white/10"
+          className="max-h-full max-w-full rounded object-contain shadow-md ring-1 ring-stone-900/10"
         />
       </div>
 
-      <div className="flex flex-col gap-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="flex flex-col gap-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {hint.level > 0 && !done && <Mask cells={cells} />}
 
         <p
@@ -350,18 +350,18 @@ export default function FlagRound({
             data-lpignore="true"
             enterKeyHint={done ? 'next' : 'go'}
             readOnly={done}
-            className={`h-14 min-w-0 flex-1 rounded-2xl border-2 bg-white px-4 text-xl focus:outline-none dark:bg-slate-800 ${
+            className={`h-14 min-w-0 flex-1 rounded-xl border-2 bg-white px-4 text-xl placeholder:text-stone-400 focus:outline-none ${
               status === 'wrong'
-                ? 'animate-shake border-rose-500'
+                ? 'animate-shake border-rose-600'
                 : status === 'correct'
-                  ? 'border-emerald-500'
-                  : 'border-slate-300 focus:border-slate-900 dark:border-slate-700 dark:focus:border-white'
+                  ? 'border-emerald-600'
+                  : 'focus:border-accent-700 border-stone-300'
             }`}
           />
           <button
             type="submit"
             aria-label={done ? T.quiz.next : T.quiz.check}
-            className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            className="bg-accent-800 hover:bg-accent-900 inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white"
           >
             <Icon name={done ? 'arrow-right' : 'corner-down-left'} className="h-6 w-6" />
           </button>
@@ -372,9 +372,9 @@ export default function FlagRound({
             type="button"
             onClick={takeHint}
             disabled={done || !canHint(flag.name, hint)}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-amber-50 font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-40 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-stone-200 font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-40"
           >
-            <Icon name="lightbulb" />
+            <Icon name="lightbulb" className="h-5 w-5 text-amber-600" />
             {T.quiz.hint}
             {hint.level > 0 && <span className="tabular-nums opacity-70">{hint.level}</span>}
           </button>
@@ -382,7 +382,7 @@ export default function FlagRound({
             type="button"
             onClick={reveal}
             disabled={done}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-300 font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-stone-200 font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-40"
           >
             <Icon name="eye" />
             {T.quiz.reveal}

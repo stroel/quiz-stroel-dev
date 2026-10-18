@@ -16,6 +16,7 @@ Twijfel je over architectuur: **stop en vraag het aan Steve**, of kijk in de doc
 - **Framework**: Astro + React (islands)
 - **Styling**: Tailwind CSS v4 (configuratie via `@theme {}`, geen `tailwind.config.js`)
 - **Iconen**: Lucide
+- **Layout**: de skill `/quiz-design`: kaders met titelbalk en rijen, `stone`-neutralen, één accentkleur (token `accent`), Lexend zelf gehost in `public/fonts/`, geen donkere modus
 - **Package manager**: pnpm
 - Persoonlijke quiz-app van Steve, publiek maar zonder login. Gemaakt voor de telefoon: elk scherm vult de viewport.
 - Vlaggen komen uit `flag-icons` en worden door `src/integrations/flag-assets.ts` naar `public/flags/` gekopieerd (gegenereerd, niet in git).
@@ -24,7 +25,7 @@ Twijfel je over architectuur: **stop en vraag het aan Steve**, of kijk in de doc
 
 1. Lees `CLAUDE.md` (dit bestand)
 2. Lees `CONVENTIONS.md` voor codestijl en patronen
-3. Lees `STYLEGUIDE.md` voor UI-conventies
+3. Lees `STYLEGUIDE.md` voor UI-conventies, en de skill `/quiz-design` (`.claude/skills/quiz-design/`) voor de layout van de quiz; waar ze botsen, wint de skill
 4. Lees de projectspecifieke docs die bij de huidige taak horen
 5. Lees `docs/vlaggen.md` voor je aan de vlaggenquiz of aan de matcher werkt
 
@@ -133,6 +134,7 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 ### Open punten
 
 - `/landen/` (kaart met world-atlas 50m en d3-geo) en `/spreuken/` staan als "Binnenkort" op de startpagina.
+- Zeeën en rivieren (gevraagd door Steve op 18-10-2026): een eigen categorie met een kaart waarop het gebied duidelijk aangeduid is. Hoort bij dezelfde kaartcomponent als `/landen/`; de data en de opzet liggen nog niet vast.
 - Land → vlag (raster van 9 of 16 met lookalikes) is nog niet gebouwd.
 - PWA: er zijn alleen meta-tags voor "zet op beginscherm"; een manifest en service worker voor offline gebruik komen later.
 - Er is nog geen testrunner. De matcher is met de hand nagekeken tegen de gevallen in `docs/vlaggen.md`; Vitest toevoegen is een beslissing voor Steve.

@@ -1,46 +1,114 @@
 import { useMemo, useState } from 'react';
 
 import Icon from '@/components/Icon';
-import { REGIONS } from '@/data/flags';
+import Panel from '@/components/Panel';
+import { FLAGS, REGIONS } from '@/data/flags';
 import { T } from '@/i18n/nl';
 import { selectFlags, type FlagSetup as Setup } from '@/lib/flag-pool';
 
-const QUICK_COUNTS = [5, 10, 25];
-const TIMER_SECONDS = [10, 20, 30];
+// What a field starts at when its switch is turned on.
+const DEFAULT_COUNT = 10;
+const DEFAULT_TIMER = 20;
+const MAX_TIMER = 600;
+
+type ExtraKey = 'microstates' | 'disputed' | 'territories' | 'organisations';
+
+// Each extra with a few flags that show what it adds. Codes, not names, so the
+// examples always match the dataset.
+const EXTRAS: { key: ExtraKey; examples: string[] }[] = [
+  { key: 'microstates', examples: ['mc', 'sm', 'va'] },
+  { key: 'disputed', examples: ['xk', 'tw', 'eh'] },
+  { key: 'territories', examples: ['gl', 'hk', 'pr'] },
+  { key: 'organisations', examples: ['eu', 'un', 'arab'] },
+];
+
+const FLAG_NAMES = new Map(FLAGS.map((flag) => [flag.code, flag.name]));
 
 const CLS = {
-  section: 'flex flex-col gap-3',
-  label: 'text-sm font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400',
-  chipRow: 'flex flex-wrap gap-2',
-  chip: 'inline-flex h-11 items-center gap-2 rounded-full border px-4 text-base font-medium transition-colors',
-  chipOn:
-    'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900',
-  chipOff:
-    'border-slate-300 bg-white text-slate-700 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-500',
-  chipCount: 'text-sm tabular-nums opacity-60',
+  field:
+    'h-10 w-16 rounded-lg border border-stone-300 bg-white px-2 text-lg tabular-nums focus:border-accent-700 focus:outline-none',
 };
 
-function Chip({
+/** A tile's heading that is also its on/off switch: the whole row is the tap target. */
+function SwitchHeading({
   on,
   label,
+  onChange,
+}: {
+  on: boolean;
+  label: string;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      className="flex h-11 items-center gap-2.5 text-left"
+    >
+      <span
+        className={`flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors ${
+          on ? 'bg-accent-700' : 'bg-stone-200'
+        }`}
+      >
+        <span
+          className={`h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
+            on ? 'translate-x-5' : ''
+          }`}
+        />
+      </span>
+      <span className="font-semibold">{label}</span>
+    </button>
+  );
+}
+
+/** Whole numbers only, clamped to [1, max]; anything else is null. */
+function parseCount(text: string, max: number): number | null {
+  const value = Number.parseInt(text, 10);
+  return Number.isFinite(value) && value > 0 ? Math.min(value, max) : null;
+}
+
+/** One option in a panel: a full-width row with a check box at the right. */
+function CheckRow({
+  on,
+  label,
+  detail,
   count,
   onClick,
 }: {
   on: boolean;
   label: string;
+  /** A second, smaller line under the label. */
+  detail?: string;
   count?: number;
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      className={`${CLS.chip} ${on ? CLS.chipOn : CLS.chipOff}`}
-    >
-      {label}
-      {count !== undefined && <span className={CLS.chipCount}>{count}</span>}
-    </button>
+    <li>
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={on}
+        onClick={onClick}
+        className="flex min-h-12 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50"
+      >
+        <span className="flex flex-1 flex-col">
+          <span className="font-medium">{label}</span>
+          {detail && <span className="text-sm text-stone-500">{detail}</span>}
+        </span>
+        {count !== undefined && (
+          <span className="text-sm text-stone-400 tabular-nums">{count}</span>
+        )}
+        <span
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+            on ? 'border-accent-700 bg-accent-700 text-white' : 'border-stone-300 bg-white'
+          }`}
+        >
+          {on && <Icon name="check" className="h-4 w-4" />}
+        </span>
+      </button>
+    </li>
   );
 }
 
@@ -52,7 +120,10 @@ export default function FlagSetup({
   onStart: (setup: Setup) => void;
 }) {
   const [setup, setSetup] = useState<Setup>(initial);
-  const [countText, setCountText] = useState(initial.count === null ? '' : String(initial.count));
+  const [countOn, setCountOn] = useState(initial.count !== null);
+  const [countText, setCountText] = useState(String(initial.count ?? DEFAULT_COUNT));
+  const [timerOn, setTimerOn] = useState(initial.timer !== null);
+  const [timerText, setTimerText] = useState(String(initial.timer ?? DEFAULT_TIMER));
 
   const available = useMemo(() => selectFlags(setup).length, [setup]);
   const regionCounts = useMemo(
@@ -67,9 +138,8 @@ export default function FlagSetup({
     [setup],
   );
 
-  const parsedCount = Number.parseInt(countText, 10);
-  const count =
-    Number.isFinite(parsedCount) && parsedCount > 0 ? Math.min(parsedCount, available) : null;
+  const count = countOn ? parseCount(countText, available) : null;
+  const timer = timerOn ? parseCount(timerText, MAX_TIMER) : null;
   const playing = count ?? available;
   const allRegions = setup.regions.length === REGIONS.length;
 
@@ -82,38 +152,39 @@ export default function FlagSetup({
     }));
   }
 
-  function toggle(key: 'microstates' | 'disputed' | 'territories' | 'organisations') {
+  function toggle(key: ExtraKey) {
     setSetup((current) => ({ ...current, [key]: !current[key] }));
   }
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
-      <header className="flex items-center gap-3 px-4 pt-4 pb-2">
+      <header className="flex items-center gap-2 border-b border-stone-200 bg-white px-2 py-3">
         <a
           href="/"
           aria-label={T.site.home}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100"
         >
           <Icon name="arrow-left" />
         </a>
         <h1 className="text-2xl font-bold tracking-tight">{T.quizzes.vlaggen.title}</h1>
       </header>
 
-      <main className="flex flex-1 flex-col gap-8 px-4 pt-4 pb-32">
-        <section className={CLS.section}>
-          <div className="flex items-center justify-between">
-            <h2 className={CLS.label}>{T.setup.regions}</h2>
+      <main className="flex flex-1 flex-col gap-4 p-4 pb-32">
+        <Panel
+          title={T.setup.regions}
+          action={
             <button
               type="button"
               onClick={() => setSetup((s) => ({ ...s, regions: allRegions ? [] : [...REGIONS] }))}
-              className="h-9 rounded-full px-3 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="text-accent-800 -mr-2 h-10 px-2 text-sm font-semibold"
             >
               {allRegions ? T.setup.none : T.setup.all}
             </button>
-          </div>
-          <div className={CLS.chipRow}>
+          }
+        >
+          <ul className="divide-y divide-stone-200">
             {REGIONS.map((region) => (
-              <Chip
+              <CheckRow
                 key={region}
                 on={setup.regions.includes(region)}
                 label={T.regions[region]}
@@ -121,88 +192,71 @@ export default function FlagSetup({
                 onClick={() => toggleRegion(region)}
               />
             ))}
-          </div>
-        </section>
+          </ul>
+        </Panel>
 
-        <section className={CLS.section}>
-          <h2 className={CLS.label}>{T.setup.extra}</h2>
-          <div className={CLS.chipRow}>
-            <Chip
-              on={setup.microstates}
-              label={T.setup.microstates}
-              onClick={() => toggle('microstates')}
-            />
-            <Chip on={setup.disputed} label={T.setup.disputed} onClick={() => toggle('disputed')} />
-            <Chip
-              on={setup.territories}
-              label={T.setup.territories}
-              onClick={() => toggle('territories')}
-            />
-            <Chip
-              on={setup.organisations}
-              label={T.setup.organisations}
-              onClick={() => toggle('organisations')}
-            />
-          </div>
-        </section>
-
-        <section className={CLS.section}>
-          <h2 className={CLS.label}>{T.setup.count}</h2>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={available}
-              value={countText}
-              placeholder={String(available)}
-              onChange={(event) => setCountText(event.target.value)}
-              className="h-11 w-24 rounded-xl border border-slate-300 bg-white px-3 text-lg tabular-nums placeholder:text-slate-400 focus:border-slate-900 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:focus:border-white"
-            />
-            {QUICK_COUNTS.filter((quick) => quick < available).map((quick) => (
-              <Chip
-                key={quick}
-                on={count === quick}
-                label={String(quick)}
-                onClick={() => setCountText(String(quick))}
+        <Panel title={T.setup.extra}>
+          <ul className="divide-y divide-stone-200">
+            {EXTRAS.map(({ key, examples }) => (
+              <CheckRow
+                key={key}
+                on={setup[key]}
+                label={T.setup[key]}
+                detail={examples.map((code) => FLAG_NAMES.get(code)).join(', ')}
+                onClick={() => toggle(key)}
               />
             ))}
-            <Chip on={count === null} label={T.setup.countAll} onClick={() => setCountText('')} />
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{T.setup.countHint}</p>
-        </section>
+          </ul>
+        </Panel>
 
-        <section className={CLS.section}>
-          <h2 className={CLS.label}>{T.setup.timer}</h2>
-          <div className={CLS.chipRow}>
-            <Chip
-              on={setup.timer === null}
-              label={T.setup.timerOff}
-              onClick={() => setSetup((s) => ({ ...s, timer: null }))}
-            />
-            {TIMER_SECONDS.map((seconds) => (
-              <Chip
-                key={seconds}
-                on={setup.timer === seconds}
-                label={T.setup.seconds(seconds)}
-                onClick={() => setSetup((s) => ({ ...s, timer: seconds }))}
-              />
-            ))}
+        <Panel title={T.setup.round}>
+          <div className="grid grid-cols-2 gap-px bg-stone-200">
+            <div className="flex flex-col gap-1 bg-white px-3 py-2">
+              <SwitchHeading on={countOn} label={T.setup.count} onChange={setCountOn} />
+              {countOn && (
+                <label className="flex items-center gap-2 pb-1">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={available}
+                    value={countText}
+                    onChange={(event) => setCountText(event.target.value)}
+                    className={CLS.field}
+                  />
+                  <span className="text-stone-500">{T.setup.countUnit(count ?? 0)}</span>
+                </label>
+              )}
+            </div>
+            <div className="flex flex-col gap-1 bg-white px-3 py-2">
+              <SwitchHeading on={timerOn} label={T.setup.timer} onChange={setTimerOn} />
+              {timerOn && (
+                <label className="flex items-center gap-2 pb-1">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={MAX_TIMER}
+                    value={timerText}
+                    onChange={(event) => setTimerText(event.target.value)}
+                    className={CLS.field}
+                  />
+                  <span className="text-stone-500">{T.setup.timerUnit(timer ?? 0)}</span>
+                </label>
+              )}
+            </div>
           </div>
-          {setup.timer !== null && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">{T.setup.timerHint}</p>
-          )}
-        </section>
+        </Panel>
       </main>
 
-      <footer className="fixed inset-x-0 bottom-0 mx-auto max-w-xl border-t border-slate-200 bg-slate-50/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
+      <footer className="fixed inset-x-0 bottom-0 mx-auto max-w-xl border-t border-stone-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         {available === 0 ? (
-          <p className="flex h-14 items-center justify-center text-slate-500">{T.setup.empty}</p>
+          <p className="flex h-14 items-center justify-center text-stone-500">{T.setup.empty}</p>
         ) : (
           <button
             type="button"
-            onClick={() => onStart({ ...setup, count })}
-            className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 text-lg font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+            onClick={() => onStart({ ...setup, count, timer })}
+            className="bg-accent-800 hover:bg-accent-900 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-lg font-semibold text-white"
           >
             <Icon name="play" />
             {T.setup.start(playing)}

@@ -4,9 +4,12 @@ Hoe `/vlaggen/` werkt, en waarom het zo werkt.
 
 ## Verloop
 
-1. **Instellen.** Kies regio's (meerdere tegelijk), extra reeksen en een aantal. Op elke regio staat
-   hoeveel vlaggen erin zitten; de startknop toont het totaal. Een leeg aantal betekent alles. De
-   keuze wordt onthouden.
+1. **Instellen.** Kies regio's (meerdere tegelijk) en extra reeksen. Onder de extra's staan per reeks
+   drie voorbeelden, uit de dataset gehaald op landcode. Op elke regio staat hoeveel vlaggen erin
+   zitten; de startknop toont het totaal. **Aantal** en **Timer** staan naast elkaar,
+   elk met een schakelaar. Uit betekent alle vlaggen en geen tijdslimiet, en dan toont het scherm
+   ook niets meer; aan toont een veld met "vlaggen" of "seconden" erachter. Een aantal boven wat
+   beschikbaar is, telt als alles. De keuze wordt onthouden.
 2. **Ronde.** Een vlag vult de bovenkant van het scherm, het invoerveld zit onderaan, boven het
    toetsenbord. `Enter` controleert het antwoord. Een juist antwoord gaat na ruim een seconde zelf
    door naar de volgende vlag. Na **Toon antwoord** tik je zelf op de pijl.
@@ -68,7 +71,7 @@ Congo's ✓, `vs` → Verenigde Staten ✓, `nederlant` ✓, `switserland` ✓, 
 
 - **Hint 1** toont een masker: één vakje per letter, met spaties, streepjes en apostroffen zoals ze
   zijn. Zo zie je dat "El Salvador" uit twee woorden bestaat.
-- **Elke volgende hint** vult een willekeurige letter in die nog niet getoond werd (in amber). De
+- **Elke volgende hint** vult een willekeurige letter in die nog niet getoond werd (in de accentkleur). De
   laatste ontbrekende letter wordt nooit gegeven: dan is **Toon antwoord** de eerlijke knop.
 - Wat je typt vult de vakjes van links naar rechts, waarbij onthulde letters worden overgeslagen.
   Je hoeft een gegeven letter dus niet te typen. Bij het controleren tellen zowel je getypte tekst
@@ -78,8 +81,9 @@ Congo's ✓, `vs` → Verenigde Staten ✓, `nederlant` ✓, `switserland` ✓, 
 
 ## Timer
 
-Optioneel, in te stellen op **Uit**, **10 s**, **20 s** of **30 s**. Standaard staat hij uit. Het
-gekozen aantal seconden wordt met de rest van de instellingen onthouden.
+Optioneel, met de schakelaar **Timer**. Aan zet hij standaard op 20 seconden; elk aantal van 1 tot
+600 seconden kan. Standaard staat hij uit. Het gekozen aantal seconden wordt met de rest van de
+instellingen onthouden.
 
 - De klok start bij elke nieuwe vlag. Een fout antwoord of een hint zet hem niet terug en ook niet
   stil: een hint kost tijd, en dat is de bedoeling.
