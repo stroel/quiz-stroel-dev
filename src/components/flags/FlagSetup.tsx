@@ -6,6 +6,7 @@ import { T } from '@/i18n/nl';
 import { selectFlags, type FlagSetup as Setup } from '@/lib/flag-pool';
 
 const QUICK_COUNTS = [5, 10, 25];
+const TIMER_SECONDS = [10, 20, 30];
 
 const CLS = {
   section: 'flex flex-col gap-3',
@@ -169,6 +170,28 @@ export default function FlagSetup({
             <Chip on={count === null} label={T.setup.countAll} onClick={() => setCountText('')} />
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">{T.setup.countHint}</p>
+        </section>
+
+        <section className={CLS.section}>
+          <h2 className={CLS.label}>{T.setup.timer}</h2>
+          <div className={CLS.chipRow}>
+            <Chip
+              on={setup.timer === null}
+              label={T.setup.timerOff}
+              onClick={() => setSetup((s) => ({ ...s, timer: null }))}
+            />
+            {TIMER_SECONDS.map((seconds) => (
+              <Chip
+                key={seconds}
+                on={setup.timer === seconds}
+                label={T.setup.seconds(seconds)}
+                onClick={() => setSetup((s) => ({ ...s, timer: seconds }))}
+              />
+            ))}
+          </div>
+          {setup.timer !== null && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">{T.setup.timerHint}</p>
+          )}
         </section>
       </main>
 

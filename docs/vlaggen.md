@@ -76,6 +76,18 @@ Congo's ✓, `vs` → Verenigde Staten ✓, `nederlant` ✓, `switserland` ✓, 
 - Een hint na een fout antwoord maakt het veld eerst leeg, anders zou het foute antwoord in het
   nieuwe masker vloeien.
 
+## Timer
+
+Optioneel, in te stellen op **Uit**, **10 s**, **20 s** of **30 s**. Standaard staat hij uit. Het
+gekozen aantal seconden wordt met de rest van de instellingen onthouden.
+
+- De klok start bij elke nieuwe vlag. Een fout antwoord of een hint zet hem niet terug en ook niet
+  stil: een hint kost tijd, en dat is de bedoeling.
+- Een amberkleurige balk onder de voortgang loopt leeg. In het laatste kwart wordt hij rood.
+- Is de tijd op, dan telt de vlag als **gemist**. De quiz toont "Te laat! Het was …" en je tikt zelf
+  door, net als na **Toon antwoord**. Het eindscherm meldt hoe vaak je te laat was, en de
+  historiek telt een time-out als gemist.
+
 ## Mobiel
 
 - `100dvh` plus `interactive-widget=resizes-content`, zodat het invoerveld op Android boven het

@@ -21,6 +21,12 @@ type Status = 'asking' | 'wrong' | 'correct' | 'revealed';
 // How long a correct answer stays on screen before the next flag.
 const ADVANCE_DELAY_MS = 1100;
 
+// Often enough for a smooth countdown bar, rarely enough to stay cheap.
+const TIMER_TICK_MS = 100;
+
+// Below this share of the time left, the countdown turns red.
+const TIMER_WARNING_SHARE = 0.25;
+
 // Every known answer, not just this round's, so a near-miss on a flag outside
 // the selection is still caught by the collision check.
 const CANDIDATES: MatchCandidate[] = FLAGS.map((flag) => ({
@@ -86,9 +92,12 @@ function Mask({ cells }: { cells: MaskCell[] }) {
 
 export default function FlagRound({
   flags,
+  timeLimit,
   onFinish,
 }: {
   flags: FlagEntry[];
+  /** Seconds per flag, or null for no limit. */
+  timeLimit: number | null;
   onFinish: (results: QuestionResult[]) => void;
 }) {
   const [index, setIndex] = useState(0);
@@ -99,6 +108,10 @@ export default function FlagRound({
   const [wrongTries, setWrongTries] = useState(0);
   const [shakeKey, setShakeKey] = useState(0);
   const [results, setResults] = useState<QuestionResult[]>([]);
+  const [timedOut, setTimedOut] = useState(false);
+  const [remainingMs, setRemainingMs] = useState(timeLimit === null ? 0 : timeLimit * 1000);
+  const questionStart = useRef(0);
+  const onTimeout = useRef(() => {});
   const inputRef = useRef<HTMLInputElement>(null);
   const advanceTimer = useRef<number | null>(null);
   const height = useVisibleHeight();
@@ -120,6 +133,37 @@ export default function FlagRound({
     [],
   );
 
+  // The clock restarts per flag only; a wrong answer or a hint does not reset it.
+  useEffect(() => {
+    questionStart.current = Date.now();
+    if (timeLimit !== null) setRemainingMs(timeLimit * 1000);
+  }, [index, timeLimit]);
+
+  useEffect(() => {
+    onTimeout.current = () => {
+      setTimedOut(true);
+      setStatus('revealed');
+      finishQuestion({
+        id: flag.code,
+        outcome: 'missed',
+        hints: hint.level,
+        wrongTries,
+        timedOut: true,
+      });
+    };
+  });
+
+  useEffect(() => {
+    if (timeLimit === null || done) return;
+    const tick = () => {
+      const left = timeLimit * 1000 - (Date.now() - questionStart.current);
+      setRemainingMs(Math.max(0, left));
+      if (left <= 0) onTimeout.current();
+    };
+    const timer = window.setInterval(tick, TIMER_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, [timeLimit, done, index]);
+
   function finishQuestion(result: QuestionResult): QuestionResult[] {
     const next = [...results, result];
     setResults(next);
@@ -139,6 +183,7 @@ export default function FlagRound({
     setStatus('asking');
     setApproximate(false);
     setWrongTries(0);
+    setTimedOut(false);
     inputRef.current?.focus();
   }
 
@@ -193,6 +238,9 @@ export default function FlagRound({
     onFinish(results);
   }
 
+  const warning =
+    timeLimit !== null && !done && remainingMs < timeLimit * 1000 * TIMER_WARNING_SHARE;
+
   const feedback =
     status === 'correct'
       ? {
@@ -204,7 +252,7 @@ export default function FlagRound({
         ? {
             tone: 'text-rose-600 dark:text-rose-400',
             icon: 'circle-x',
-            text: T.quiz.revealed(flag.name),
+            text: timedOut ? T.quiz.timedOut(flag.name) : T.quiz.revealed(flag.name),
           }
         : status === 'wrong'
           ? { tone: 'text-rose-600 dark:text-rose-400', icon: 'x', text: T.quiz.wrong }
@@ -234,6 +282,30 @@ export default function FlagRound({
           {T.quiz.progress(index + 1, flags.length)}
         </span>
       </header>
+
+      {timeLimit !== null && (
+        <div className="flex items-center gap-3 px-4 pt-2">
+          <span className="flex w-11 shrink-0 justify-center">
+            <Icon
+              name="timer"
+              className={`h-5 w-5 ${warning ? 'text-rose-500' : 'text-slate-400'}`}
+            />
+          </span>
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div
+              className={`h-full rounded-full ${warning ? 'bg-rose-500' : 'bg-amber-500'}`}
+              style={{ width: `${(remainingMs / (timeLimit * 1000)) * 100}%` }}
+            />
+          </div>
+          <span
+            className={`w-12 shrink-0 text-right text-sm font-semibold tabular-nums ${
+              warning ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            {T.quiz.secondsLeft(Math.ceil(remainingMs / 1000))}
+          </span>
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1 items-center justify-center p-4">
         <img

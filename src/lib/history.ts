@@ -7,6 +7,8 @@ export interface QuestionResult {
   outcome: Outcome;
   hints: number;
   wrongTries: number;
+  /** Set when the time limit ran out; the outcome is then `missed`. */
+  timedOut?: true;
 }
 
 /** Running totals per question id, kept across rounds for a later "weak spots" mode. */

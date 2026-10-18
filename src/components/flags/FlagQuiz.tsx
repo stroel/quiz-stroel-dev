@@ -18,6 +18,7 @@ const DEFAULT_SETUP: Setup = {
   territories: false,
   organisations: false,
   count: null,
+  timer: null,
 };
 
 type Phase =
@@ -67,6 +68,7 @@ export default function FlagQuiz() {
         <FlagRound
           key={phase.round}
           flags={phase.flags}
+          timeLimit={setup.timer}
           onFinish={(results) => finish(phase.flags, results)}
         />
       );

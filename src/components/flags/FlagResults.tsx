@@ -58,6 +58,7 @@ export default function FlagResults({
   const hinted = pick('hinted');
   const hints = results.reduce((sum, r) => sum + r.hints, 0);
   const wrongTries = results.reduce((sum, r) => sum + r.wrongTries, 0);
+  const timedOut = results.filter((r) => r.timedOut).length;
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
@@ -91,6 +92,12 @@ export default function FlagResults({
             <Icon name="x" className="h-4 w-4" />
             {T.end.wrongTries(wrongTries)}
           </span>
+          {timedOut > 0 && (
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="timer" className="h-4 w-4" />
+              {T.end.timedOut(timedOut)}
+            </span>
+          )}
         </p>
 
         <FlagList title={T.end.misses} flags={missed} />

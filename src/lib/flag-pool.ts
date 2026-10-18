@@ -8,6 +8,8 @@ export interface FlagSetup {
   organisations: boolean;
   /** Empty means every flag in the selection. */
   count: number | null;
+  /** Seconds per flag; null means no time limit. */
+  timer: number | null;
 }
 
 /**
