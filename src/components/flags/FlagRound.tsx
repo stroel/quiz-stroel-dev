@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type SubmitEvent } from 'react';
 
+import Confetti from '@/components/Confetti';
 import Icon from '@/components/Icon';
 import { FLAGS, type FlagEntry } from '@/data/flags';
 import { T } from '@/i18n/nl';
@@ -26,6 +27,18 @@ const TIMER_TICK_MS = 100;
 
 // Below this share of the time left, the countdown turns red.
 const TIMER_WARNING_SHARE = 0.25;
+
+// Taps on "Ja, stop" sooner than this after "Stop" are the same tap twice.
+const STOP_GUARD_MS = 400;
+
+const CLS = {
+  // Fixed width on both ends of a bar, so the progress and timer bars match.
+  barLabel: 'flex w-10 shrink-0 text-sm tabular-nums',
+  track: 'h-2 flex-1 overflow-hidden rounded-full bg-slate-200',
+  // A large icon above a one-word label, so three of them fit side by side on a phone.
+  action:
+    'inline-flex h-16 flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 text-xs font-semibold tracking-wider text-slate-700 uppercase hover:bg-slate-50 disabled:opacity-40',
+};
 
 // Every known answer, not just this round's, so a near-miss on a flag outside
 // the selection is still caught by the collision check.
@@ -109,6 +122,9 @@ export default function FlagRound({
   const [shakeKey, setShakeKey] = useState(0);
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [timedOut, setTimedOut] = useState(false);
+  const [confirmingStop, setConfirmingStop] = useState(false);
+  const [burst, setBurst] = useState(0);
+  const stopAskedAt = useRef(0);
   const [remainingMs, setRemainingMs] = useState(timeLimit === null ? 0 : timeLimit * 1000);
   const questionStart = useRef(0);
   const onTimeout = useRef(() => {});
@@ -210,6 +226,7 @@ export default function FlagRound({
 
     setStatus('correct');
     setApproximate(match.approximate);
+    setBurst(burst + 1);
     const all = finishQuestion({
       id: flag.code,
       outcome: hint.level > 0 ? 'hinted' : 'clean',
@@ -238,76 +255,96 @@ export default function FlagRound({
     onFinish(results);
   }
 
+  function confirmStop() {
+    if (Date.now() - stopAskedAt.current < STOP_GUARD_MS) return;
+    stop();
+  }
+
+  function askStop() {
+    stopAskedAt.current = Date.now();
+    setConfirmingStop(true);
+  }
+
+  function cancelStop() {
+    setConfirmingStop(false);
+    inputRef.current?.focus();
+  }
+
   const warning =
     timeLimit !== null && !done && remainingMs < timeLimit * 1000 * TIMER_WARNING_SHARE;
 
   const feedback =
     status === 'correct'
       ? {
-          tone: 'text-emerald-700',
+          tone: 'bg-emerald-600 text-white',
           icon: 'circle-check',
           text: approximate ? T.quiz.correctAs(flag.name) : T.quiz.correct,
         }
       : status === 'revealed'
         ? {
-            tone: 'text-rose-700',
-            icon: 'circle-x',
+            tone: 'bg-rose-600 text-white',
+            icon: timedOut ? 'timer' : 'circle-x',
             text: timedOut ? T.quiz.timedOut(flag.name) : T.quiz.revealed(flag.name),
           }
         : status === 'wrong'
-          ? { tone: 'text-rose-700', icon: 'x', text: T.quiz.wrong }
+          ? { tone: 'bg-rose-600 text-white', icon: 'x', text: T.quiz.wrong }
           : null;
 
   return (
     <div
-      className="mx-auto flex h-dvh max-w-xl flex-col overflow-hidden bg-white"
+      className="relative mx-auto flex h-dvh max-w-xl flex-col overflow-hidden bg-white"
       style={height === null ? undefined : { height: `${height}px` }}
     >
-      <header className="flex items-center gap-3 px-4 pt-3">
-        <button
-          type="button"
-          onClick={stop}
-          aria-label={T.quiz.stop}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+      {/* Both bars share the same columns, so they line up and are equally wide. */}
+      <header className="flex flex-col gap-4 px-4 pt-5">
+        <div
+          className="flex items-center gap-3"
+          role="progressbar"
+          aria-label={T.quiz.progress(index + 1, flags.length)}
+          aria-valuemin={1}
+          aria-valuemax={flags.length}
+          aria-valuenow={index + 1}
         >
-          <Icon name="x" />
-        </button>
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="bg-accent-700 h-full rounded-full transition-[width] duration-300"
-            style={{ width: `${(index / flags.length) * 100}%` }}
-          />
-        </div>
-        <span className="shrink-0 text-sm font-medium text-slate-500 tabular-nums">
-          {T.quiz.progress(index + 1, flags.length)}
-        </span>
-      </header>
-
-      {timeLimit !== null && (
-        <div className="flex items-center gap-3 px-4 pt-2">
-          <span className="flex w-11 shrink-0 justify-center">
-            <Icon
-              name="timer"
-              className={`h-5 w-5 ${warning ? 'text-rose-600' : 'text-slate-400'}`}
-            />
+          <span className={`${CLS.barLabel} justify-start font-semibold text-slate-900`}>
+            {index + 1}
           </span>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200">
+          <div className={CLS.track}>
             <div
-              className={`h-full rounded-full ${warning ? 'bg-rose-500' : 'bg-amber-500'}`}
-              style={{ width: `${(remainingMs / (timeLimit * 1000)) * 100}%` }}
+              className="bg-accent-700 h-full rounded-full transition-[width] duration-300"
+              style={{ width: `${(index / flags.length) * 100}%` }}
             />
           </div>
-          <span
-            className={`w-12 shrink-0 text-right text-sm font-semibold tabular-nums ${
-              warning ? 'text-rose-700' : 'text-slate-500'
-            }`}
-          >
-            {T.quiz.secondsLeft(Math.ceil(remainingMs / 1000))}
+          <span className={`${CLS.barLabel} justify-end font-medium text-slate-500`}>
+            {flags.length}
           </span>
         </div>
-      )}
 
-      <div className="mt-2 flex min-h-0 flex-1 items-center justify-center border-y border-slate-200 bg-slate-50 p-6">
+        {timeLimit !== null && (
+          <div className="flex items-center gap-3">
+            <span className={CLS.barLabel}>
+              <Icon
+                name="timer"
+                className={`h-5 w-5 ${warning ? 'text-rose-600' : 'text-slate-400'}`}
+              />
+            </span>
+            <div className={CLS.track}>
+              <div
+                className={`h-full rounded-full ${warning ? 'bg-rose-500' : 'bg-amber-500'}`}
+                style={{ width: `${(remainingMs / (timeLimit * 1000)) * 100}%` }}
+              />
+            </div>
+            <span
+              className={`${CLS.barLabel} justify-end font-semibold ${
+                warning ? 'text-rose-700' : 'text-slate-500'
+              }`}
+            >
+              {T.quiz.secondsLeft(Math.ceil(remainingMs / 1000))}
+            </span>
+          </div>
+        )}
+      </header>
+
+      <div className="mt-5 flex min-h-0 flex-1 items-center justify-center border-y border-slate-200 bg-slate-50 p-6">
         <img
           key={flag.code}
           src={flagSrc(flag.code)}
@@ -316,20 +353,26 @@ export default function FlagRound({
         />
       </div>
 
-      <div className="flex flex-col gap-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {hint.level > 0 && !done && <Mask cells={cells} />}
-
-        <p
-          className={`flex min-h-7 items-center justify-center gap-2 text-center text-lg font-semibold ${feedback?.tone ?? ''}`}
+      <div className="relative flex flex-col gap-3 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {/* Feedback floats as a tooltip just above this panel, so it takes no room of its own. */}
+        <div
+          className="pointer-events-none absolute inset-x-4 bottom-full mb-3 flex justify-center"
           aria-live="polite"
         >
           {feedback && (
-            <>
+            <p
+              className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-center font-semibold shadow-md ${feedback.tone}`}
+            >
               <Icon name={feedback.icon} className="h-5 w-5 shrink-0" />
               {feedback.text}
-            </>
+              <span
+                className={`absolute top-full left-1/2 -mt-1.5 h-3 w-3 -translate-x-1/2 rotate-45 ${feedback.tone}`}
+              />
+            </p>
           )}
-        </p>
+        </div>
+
+        {hint.level > 0 && !done && <Mask cells={cells} />}
 
         <form onSubmit={submit} className="flex gap-2">
           <input
@@ -367,28 +410,55 @@ export default function FlagRound({
           </button>
         </form>
 
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={takeHint}
-            disabled={done || !canHint(flag.name, hint)}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-          >
-            <Icon name="lightbulb" className="h-5 w-5 text-amber-600" />
-            {T.quiz.hint}
-            {hint.level > 0 && <span className="tabular-nums opacity-70">{hint.level}</span>}
-          </button>
-          <button
-            type="button"
-            onClick={reveal}
-            disabled={done}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-          >
-            <Icon name="eye" />
-            {T.quiz.reveal}
-          </button>
-        </div>
+        {confirmingStop ? (
+          // "Ja, stop" takes the place of "Stop"; a tap within STOP_GUARD_MS of opening is
+          // ignored, so a double tap does not end the round by accident.
+          <div className="grid grid-cols-3 gap-2">
+            <p className="flex h-16 items-center justify-center text-center text-sm font-semibold">
+              {T.quiz.confirmStop}
+            </p>
+            <button type="button" onClick={cancelStop} className={CLS.action}>
+              <Icon name="arrow-left" className="h-6 w-6" />
+              {T.quiz.keepPlaying}
+            </button>
+            <button
+              type="button"
+              onClick={confirmStop}
+              className="inline-flex h-16 flex-col items-center justify-center gap-1 rounded-xl bg-rose-600 text-xs font-semibold tracking-wider text-white uppercase hover:bg-rose-700"
+            >
+              <Icon name="x" className="h-6 w-6" />
+              {T.quiz.stopConfirmed}
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={takeHint}
+              disabled={done || !canHint(flag.name, hint)}
+              className={CLS.action}
+            >
+              <Icon name="lightbulb" className="h-6 w-6 text-amber-600" />
+              <span>
+                {T.quiz.hint}
+                {hint.level > 0 && (
+                  <span className="ml-1 tabular-nums opacity-70">{hint.level}</span>
+                )}
+              </span>
+            </button>
+            <button type="button" onClick={reveal} disabled={done} className={CLS.action}>
+              <Icon name="eye" className="h-6 w-6" />
+              {T.quiz.reveal}
+            </button>
+            <button type="button" onClick={askStop} className={CLS.action}>
+              <Icon name="x" className="h-6 w-6" />
+              {T.quiz.stop}
+            </button>
+          </div>
+        )}
       </div>
+
+      <Confetti burst={burst} />
     </div>
   );
 }

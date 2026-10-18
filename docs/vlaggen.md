@@ -11,12 +11,19 @@ Hoe `/vlaggen/` werkt, en waarom het zo werkt.
    ook niets meer; aan toont een veld met "vlaggen" of "seconden" erachter. Een aantal boven wat
    beschikbaar is, telt als alles. De keuze wordt onthouden.
 2. **Ronde.** Een vlag vult de bovenkant van het scherm, het invoerveld zit onderaan, boven het
-   toetsenbord. `Enter` controleert het antwoord. Een juist antwoord gaat na ruim een seconde zelf
-   door naar de volgende vlag. Na **Toon antwoord** tik je zelf op de pijl.
+   toetsenbord. `Enter` controleert het antwoord. De terugmelding ("Juist!", "Niet juist", "Te
+   laat! …") verschijnt als tooltip net boven het invoerkader, zodat ze geen eigen ruimte inneemt.
+   Een juist antwoord geeft een kleine confettiregen (`src/components/Confetti.tsx`, zonder
+   bibliotheek; niet bij "minder beweging" op het toestel) en gaat na ruim een seconde zelf door
+   naar de volgende vlag. Na **Toon** tik je zelf op de pijl.
 3. **Eindscherm.** Toont juist zonder hints, juist met hints en gemist, plus het aantal hints en
    foute pogingen. Daaronder staan de lijsten met gemiste vlaggen en vlaggen waarvoor je hints
-   nodig had. **Oefen deze opnieuw** speelt precies die vlaggen nog eens. Met het kruisje stop je
-   een ronde vroeger; je komt dan op het eindscherm met wat al gespeeld is.
+   nodig had. **Oefen deze opnieuw** speelt precies die vlaggen nog eens. Met **Stop** (de derde
+   knop onderaan) stop je een ronde vroeger. Op dezelfde plaats vraagt de quiz dan "Ben je zeker?",
+   met **Verder** in het midden en **Ja, stop** rechts, precies waar **Stop** stond. Een tweede tik
+   binnen 0,4 seconde telt niet, zodat een dubbele tik de ronde niet per ongeluk stopt. Na
+   **Ja, stop** kom je op het eindscherm met wat al gespeeld is, of op het instelscherm als er nog
+   niets gespeeld was.
 
 Er zijn geen punten. Per vlag wordt in `localStorage` (`quiz:vlaggen:history`) bijgehouden hoe
 vaak ze gezien, juist, met hints of gemist was, zodat later een modus "mijn zwakke vlaggen" kan
@@ -72,7 +79,7 @@ Congo's ✓, `vs` → Verenigde Staten ✓, `nederlant` ✓, `switserland` ✓, 
 - **Hint 1** toont een masker: één vakje per letter, met spaties, streepjes en apostroffen zoals ze
   zijn. Zo zie je dat "El Salvador" uit twee woorden bestaat.
 - **Elke volgende hint** vult een willekeurige letter in die nog niet getoond werd (in amber). De
-  laatste ontbrekende letter wordt nooit gegeven: dan is **Toon antwoord** de eerlijke knop.
+  laatste ontbrekende letter wordt nooit gegeven: dan is **Toon** de eerlijke knop.
 - Wat je typt vult de vakjes van links naar rechts, waarbij onthulde letters worden overgeslagen.
   Je hoeft een gegeven letter dus niet te typen. Bij het controleren tellen zowel je getypte tekst
   als het ingevulde masker.
@@ -89,7 +96,7 @@ instellingen onthouden.
   stil: een hint kost tijd, en dat is de bedoeling.
 - Een amberkleurige balk onder de voortgang loopt leeg. In het laatste kwart wordt hij rood.
 - Is de tijd op, dan telt de vlag als **gemist**. De quiz toont "Te laat! Het was …" en je tikt zelf
-  door, net als na **Toon antwoord**. Het eindscherm meldt hoe vaak je te laat was, en de
+  door, net als na **Toon**. Het eindscherm meldt hoe vaak je te laat was, en de
   historiek telt een time-out als gemist.
 
 ## Mobiel
