@@ -71,7 +71,7 @@ Congo's ✓, `vs` → Verenigde Staten ✓, `nederlant` ✓, `switserland` ✓, 
 
 - **Hint 1** toont een masker: één vakje per letter, met spaties, streepjes en apostroffen zoals ze
   zijn. Zo zie je dat "El Salvador" uit twee woorden bestaat.
-- **Elke volgende hint** vult een willekeurige letter in die nog niet getoond werd (in de accentkleur). De
+- **Elke volgende hint** vult een willekeurige letter in die nog niet getoond werd (in amber). De
   laatste ontbrekende letter wordt nooit gegeven: dan is **Toon antwoord** de eerlijke knop.
 - Wat je typt vult de vakjes van links naar rechts, waarbij onthulde letters worden overgeslagen.
   Je hoeft een gegeven letter dus niet te typen. Bij het controleren tellen zowel je getypte tekst

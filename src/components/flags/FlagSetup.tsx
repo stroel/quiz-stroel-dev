@@ -26,7 +26,7 @@ const FLAG_NAMES = new Map(FLAGS.map((flag) => [flag.code, flag.name]));
 
 const CLS = {
   field:
-    'h-10 w-16 rounded-lg border border-stone-300 bg-white px-2 text-lg tabular-nums focus:border-accent-700 focus:outline-none',
+    'h-10 w-16 rounded-lg border border-slate-300 bg-white px-2 text-lg tabular-nums focus:border-accent-700 focus:outline-none',
 };
 
 /** A tile's heading that is also its on/off switch: the whole row is the tap target. */
@@ -49,7 +49,7 @@ function SwitchHeading({
     >
       <span
         className={`flex h-7 w-12 shrink-0 items-center rounded-full p-0.5 transition-colors ${
-          on ? 'bg-accent-700' : 'bg-stone-200'
+          on ? 'bg-accent-700' : 'bg-slate-200'
         }`}
       >
         <span
@@ -91,18 +91,18 @@ function CheckRow({
         role="checkbox"
         aria-checked={on}
         onClick={onClick}
-        className="flex min-h-12 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-stone-50"
+        className="flex min-h-12 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50"
       >
         <span className="flex flex-1 flex-col">
           <span className="font-medium">{label}</span>
-          {detail && <span className="text-sm text-stone-500">{detail}</span>}
+          {detail && <span className="text-sm text-slate-500">{detail}</span>}
         </span>
         {count !== undefined && (
-          <span className="text-sm text-stone-400 tabular-nums">{count}</span>
+          <span className="text-sm text-slate-400 tabular-nums">{count}</span>
         )}
         <span
           className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-            on ? 'border-accent-700 bg-accent-700 text-white' : 'border-stone-300 bg-white'
+            on ? 'border-accent-700 bg-accent-700 text-white' : 'border-slate-300 bg-white'
           }`}
         >
           {on && <Icon name="check" className="h-4 w-4" />}
@@ -158,11 +158,11 @@ export default function FlagSetup({
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
-      <header className="flex items-center gap-2 border-b border-stone-200 bg-white px-2 py-3">
+      <header className="flex items-center gap-2 border-b border-slate-200 bg-white px-2 py-3">
         <a
           href="/"
           aria-label={T.site.home}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
         >
           <Icon name="arrow-left" />
         </a>
@@ -182,7 +182,7 @@ export default function FlagSetup({
             </button>
           }
         >
-          <ul className="divide-y divide-stone-200">
+          <ul className="divide-y divide-slate-200">
             {REGIONS.map((region) => (
               <CheckRow
                 key={region}
@@ -196,7 +196,7 @@ export default function FlagSetup({
         </Panel>
 
         <Panel title={T.setup.extra}>
-          <ul className="divide-y divide-stone-200">
+          <ul className="divide-y divide-slate-200">
             {EXTRAS.map(({ key, examples }) => (
               <CheckRow
                 key={key}
@@ -210,7 +210,7 @@ export default function FlagSetup({
         </Panel>
 
         <Panel title={T.setup.round}>
-          <div className="grid grid-cols-2 gap-px bg-stone-200">
+          <div className="grid grid-cols-2 gap-px bg-slate-200">
             <div className="flex flex-col gap-1 bg-white px-3 py-2">
               <SwitchHeading on={countOn} label={T.setup.count} onChange={setCountOn} />
               {countOn && (
@@ -224,7 +224,7 @@ export default function FlagSetup({
                     onChange={(event) => setCountText(event.target.value)}
                     className={CLS.field}
                   />
-                  <span className="text-stone-500">{T.setup.countUnit(count ?? 0)}</span>
+                  <span className="text-slate-500">{T.setup.countUnit(count ?? 0)}</span>
                 </label>
               )}
             </div>
@@ -241,7 +241,7 @@ export default function FlagSetup({
                     onChange={(event) => setTimerText(event.target.value)}
                     className={CLS.field}
                   />
-                  <span className="text-stone-500">{T.setup.timerUnit(timer ?? 0)}</span>
+                  <span className="text-slate-500">{T.setup.timerUnit(timer ?? 0)}</span>
                 </label>
               )}
             </div>
@@ -249,9 +249,9 @@ export default function FlagSetup({
         </Panel>
       </main>
 
-      <footer className="fixed inset-x-0 bottom-0 mx-auto max-w-xl border-t border-stone-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
+      <footer className="fixed inset-x-0 bottom-0 mx-auto max-w-xl border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">
         {available === 0 ? (
-          <p className="flex h-14 items-center justify-center text-stone-500">{T.setup.empty}</p>
+          <p className="flex h-14 items-center justify-center text-slate-500">{T.setup.empty}</p>
         ) : (
           <button
             type="button"

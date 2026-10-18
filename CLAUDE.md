@@ -16,7 +16,7 @@ Twijfel je over architectuur: **stop en vraag het aan Steve**, of kijk in de doc
 - **Framework**: Astro + React (islands)
 - **Styling**: Tailwind CSS v4 (configuratie via `@theme {}`, geen `tailwind.config.js`)
 - **Iconen**: Lucide
-- **Layout**: de skill `/quiz-design`: kaders met titelbalk en rijen, `stone`-neutralen, één accentkleur (token `accent`), Lexend zelf gehost in `public/fonts/`, geen donkere modus
+- **Layout**: de skill `/quiz-design`: kaders met titelbalk en rijen, de kleuren van stroel.dev (`slate`, zwart als accent via de token `accent`), het STROEL-logo alleen onderaan de startpagina, Lexend zelf gehost in `public/fonts/`, geen donkere modus
 - **Package manager**: pnpm
 - Persoonlijke quiz-app van Steve, publiek maar zonder login. Gemaakt voor de telefoon: elk scherm vult de viewport.
 - Vlaggen komen uit `flag-icons` en worden door `src/integrations/flag-assets.ts` naar `public/flags/` gekopieerd (gegenereerd, niet in git).

@@ -8,6 +8,7 @@ export const T = {
     play: 'Speel',
     soon: 'Binnenkort',
     home: 'Naar de startpagina',
+    byStroel: 'Gemaakt door STROEL (opent stroel.dev in een nieuw tabblad)',
   },
   quizzes: {
     vlaggen: { title: 'Vlaggen', description: 'Herken de vlag en tik het land.' },

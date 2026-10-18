@@ -16,42 +16,42 @@ const soon = quizzes.filter((quiz) => !quiz.ready);
 
 <Base title={T.site.title}>
   <div class="mx-auto flex min-h-dvh max-w-xl flex-col">
-    <header class="border-b border-stone-200 bg-white px-4 pt-12 pb-5">
+    <header class="border-b border-slate-200 bg-white px-4 pt-12 pb-5">
       <h1 class="text-4xl font-bold tracking-tight">{T.site.title}</h1>
-      <p class="mt-1 text-stone-500">{T.site.tagline}</p>
+      <p class="mt-1 text-slate-500">{T.site.tagline}</p>
     </header>
 
     <main class="flex flex-col gap-4 p-4">
-      <section class="overflow-hidden rounded-xl border border-stone-200 bg-white">
-        <h2 class="flex min-h-10 items-center border-b border-stone-200 bg-stone-100 px-4 text-sm font-semibold text-stone-600">
+      <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <h2 class="flex min-h-10 items-center border-b border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-600">
           {T.site.play}
         </h2>
-        <ul class="divide-y divide-stone-200">
+        <ul class="divide-y divide-slate-200">
           {ready.map((quiz) => (
             <li>
-              <a href={quiz.href} class="flex items-center gap-3 px-4 py-4 hover:bg-stone-50">
+              <a href={quiz.href} class="flex items-center gap-3 px-4 py-4 hover:bg-slate-50">
                 <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-accent-800 text-white">
                   <Icon name={quiz.icon} class="h-5 w-5" />
                 </span>
                 <span class="flex flex-1 flex-col">
                   <span class="text-lg font-semibold">{quiz.title}</span>
-                  <span class="text-sm text-stone-500">{quiz.description}</span>
+                  <span class="text-sm text-slate-500">{quiz.description}</span>
                 </span>
-                <Icon name="arrow-right" class="h-5 w-5 text-stone-400" />
+                <Icon name="arrow-right" class="h-5 w-5 text-slate-400" />
               </a>
             </li>
           ))}
         </ul>
       </section>
 
-      <section class="overflow-hidden rounded-xl border border-stone-200 bg-white">
-        <h2 class="flex min-h-10 items-center border-b border-stone-200 bg-stone-100 px-4 text-sm font-semibold text-stone-600">
+      <section class="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <h2 class="flex min-h-10 items-center border-b border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-600">
           {T.site.soon}
         </h2>
-        <ul class="divide-y divide-stone-200">
+        <ul class="divide-y divide-slate-200">
           {soon.map((quiz) => (
-            <li class="flex items-center gap-3 px-4 py-3.5 text-stone-400">
-              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-stone-100">
+            <li class="flex items-center gap-3 px-4 py-3.5 text-slate-400">
+              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100">
                 <Icon name={quiz.icon} class="h-5 w-5" />
               </span>
               <span class="flex flex-1 flex-col">
@@ -63,5 +63,17 @@ const soon = quizzes.filter((quiz) => !quiz.ready);
         </ul>
       </section>
     </main>
+
+    <footer class="mt-auto flex justify-center px-4 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <a
+        href="https://stroel.dev"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={T.site.byStroel}
+        class="rounded-lg p-2 opacity-70 transition-opacity hover:opacity-100"
+      >
+        <img src="https://stroel.dev/dark-landscape.svg" alt="" class="h-20 w-auto" />
+      </a>
+    </footer>
   </div>
 </Base>
