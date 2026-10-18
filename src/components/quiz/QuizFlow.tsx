@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import QuizResults from '@/components/quiz/QuizResults';
 import QuizRound, { type TapState, type Tapping } from '@/components/quiz/QuizRound';
 import QuizSetup, { type ExtraKey } from '@/components/quiz/QuizSetup';
-import { REGIONS, type FlagEntry } from '@/data/flags';
+import { REGIONS } from '@/data/flags';
 import { T } from '@/i18n/nl';
 import { shuffle, type FlagSetup as Setup } from '@/lib/flag-pool';
 import { recordResults, type QuestionResult } from '@/lib/history';
@@ -30,7 +30,7 @@ type Phase =
  * remembered and every round written to the history. The quiz itself only says
  * what it selects, how a selection becomes questions, and how a question looks.
  */
-export default function QuizFlow({
+export default function QuizFlow<Entry>({
   quiz,
   title,
   select,
@@ -38,6 +38,7 @@ export default function QuizFlow({
   unit,
   before,
   overview,
+  regions = true,
   questionsFor,
   candidates,
   prompt,
@@ -47,15 +48,17 @@ export default function QuizFlow({
   /** Key in localStorage: `quiz:<quiz>:setup` and `quiz:<quiz>:history`. */
   quiz: string;
   title: string;
-  select: (setup: Setup) => FlagEntry[];
+  select: (setup: Setup) => Entry[];
+  /** False for a quiz that is not about countries: no regions panel. */
+  regions?: boolean;
   extras: ExtraKey[];
   unit: (count: number) => string;
   before?: ReactNode;
   overview?: string;
-  questionsFor: (entries: FlagEntry[]) => Question[];
+  questionsFor: (entries: Entry[]) => Question[];
   candidates: Candidates;
   prompt: (question: Question, tap: TapState) => ReactNode;
-  placeholder: string;
+  placeholder: string | ((question: Question) => string);
   tapping?: Tapping | undefined;
 }) {
   const setupKey = `quiz:${quiz}:setup`;
@@ -93,6 +96,7 @@ export default function QuizFlow({
           unit={unit}
           before={before}
           {...(overview && { overview })}
+          regions={regions}
           onStart={(chosen) => {
             setSetup(chosen);
             writeJson(setupKey, chosen);

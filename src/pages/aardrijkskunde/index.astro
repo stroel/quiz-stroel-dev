@@ -1,0 +1,12 @@
+---
+// The geography quiz is one React island. `client:only`: setup and history come from
+// localStorage, which the server cannot see, so rendering it on the server would
+// only produce markup that is replaced on load.
+import GeoQuiz from '@/components/geo/GeoQuiz';
+import { T } from '@/i18n/nl';
+import Base from '@/layouts/Base.astro';
+---
+
+<Base title={`${T.quizzes.aardrijkskunde.title} · ${T.site.title}`}>
+  <GeoQuiz client:only="react" />
+</Base>

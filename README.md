@@ -10,10 +10,15 @@ startpagina laat je een quiz kiezen:
   [`docs/hoofdsteden.md`](docs/hoofdsteden.md).
 - **Landen** (`/landen/`): een land is ingekleurd op de kaart en je tikt de naam. Zie
   [`docs/landen.md`](docs/landen.md).
+- **Aardrijkskunde** (`/aardrijkskunde/`): een zee, rivier of gebergte is aangeduid op de kaart en
+  je tikt de naam. Zie [`docs/aardrijkskunde.md`](docs/aardrijkskunde.md).
 - **Spreuken** (`/spreuken/`): wie zei het? Binnenkort.
 
 Elke quiz heeft een **Overzicht** (`/vlaggen/overzicht/`, `/hoofdsteden/overzicht/`) met alle
 vragen en antwoorden per regio, om door te scrollen.
+
+Kaartdata: [Natural Earth](https://www.naturalearthdata.com) (publiek domein) en, voor de Belgische
+rivieren, © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers (ODbL).
 
 Er is geen backend. Je instellingen en historiek staan in `localStorage` van het toestel.
 

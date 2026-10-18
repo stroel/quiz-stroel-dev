@@ -14,6 +14,10 @@ export const T = {
     vlaggen: { title: 'Vlaggen', description: 'Herken de vlag en tik het land.' },
     hoofdsteden: { title: 'Hoofdsteden', description: 'Ken je de hoofdstad van elk land?' },
     landen: { title: 'Landen', description: 'Herken het land op de kaart.' },
+    aardrijkskunde: {
+      title: 'Aardrijkskunde',
+      description: 'Zeeën, rivieren en gebergtes op de kaart.',
+    },
     spreuken: { title: 'Spreuken', description: 'Wie zei het, en wanneer?' },
   },
   regions: {
@@ -50,7 +54,20 @@ export const T = {
     zoom: (name: string) => `Vlag van ${name} groot tonen`,
     close: 'Sluiten',
   },
+  geo: {
+    groupsTitle: 'Reeksen',
+    groups: {
+      zeeen: 'Zeeën en oceanen',
+      'rivieren-be': 'Rivieren in België',
+      rivieren: 'Rivieren in de wereld',
+      gebergtes: 'Gebergtes',
+    },
+    mapLabel: 'Kaart met het gebied om te raden',
+    credit: 'Natural Earth · © OpenStreetMap-bijdragers',
+    placeholder: { zee: 'Welke zee?', rivier: 'Welke rivier?', gebergte: 'Welk gebergte?' },
+  },
   units: {
+    questions: (count: number) => (count === 1 ? 'vraag' : 'vragen'),
     flags: (count: number) => (count === 1 ? 'vlag' : 'vlaggen'),
     countries: (count: number) => (count === 1 ? 'land' : 'landen'),
   },

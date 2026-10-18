@@ -3,7 +3,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Icon from '@/components/Icon';
 import Panel from '@/components/Panel';
 import CheckRow from '@/components/quiz/CheckRow';
-import { FLAGS, REGIONS, type FlagEntry } from '@/data/flags';
+import { FLAGS, REGIONS } from '@/data/flags';
 import { T } from '@/i18n/nl';
 import type { FlagSetup as Setup } from '@/lib/flag-pool';
 
@@ -83,13 +83,17 @@ export default function QuizSetup({
   unit,
   before,
   overview,
+  regions = true,
   onStart,
 }: {
   title: string;
   initial: Setup;
   /** The entries a setup plays; drives every count on the screen. */
-  select: (setup: Setup) => FlagEntry[];
+  /** The entries a setup plays; only its length matters here. */
+  select: (setup: Setup) => readonly unknown[];
   extras: ExtraKey[];
+  /** False for a quiz that is not about countries: no regions panel. */
+  regions?: boolean;
   /** "vlaggen", "landen": the word after a count. */
   unit: (count: number) => string;
   before?: ReactNode;
@@ -162,82 +166,91 @@ export default function QuizSetup({
             then the extras, then the round. On two columns the round wraps below. */}
         <div className="flex flex-col gap-4">
           {before}
-          <Panel
-            title={T.setup.regions}
-            action={
-              <button
-                type="button"
-                onClick={() => setSetup((s) => ({ ...s, regions: allRegions ? [] : [...REGIONS] }))}
-                className="text-accent-800 -mr-2 h-10 px-2 text-sm font-semibold"
-              >
-                {allRegions ? T.setup.none : T.setup.all}
-              </button>
-            }
-          >
+          {regions && (
+            <Panel
+              title={T.setup.regions}
+              action={
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSetup((s) => ({ ...s, regions: allRegions ? [] : [...REGIONS] }))
+                  }
+                  className="text-accent-800 -mr-2 h-10 px-2 text-sm font-semibold"
+                >
+                  {allRegions ? T.setup.none : T.setup.all}
+                </button>
+              }
+            >
+              <ul className="divide-y divide-slate-200">
+                {REGIONS.map((region) => (
+                  <CheckRow
+                    key={region}
+                    on={setup.regions.includes(region)}
+                    label={T.regions[region]}
+                    count={regionCounts[region] ?? 0}
+                    onClick={() => toggleRegion(region)}
+                  />
+                ))}
+              </ul>
+            </Panel>
+          )}
+        </div>
+        {extras.length > 0 && (
+          <Panel title={T.setup.extra}>
             <ul className="divide-y divide-slate-200">
-              {REGIONS.map((region) => (
+              {EXTRAS.filter(({ key }) => extras.includes(key)).map(({ key, examples }) => (
                 <CheckRow
-                  key={region}
-                  on={setup.regions.includes(region)}
-                  label={T.regions[region]}
-                  count={regionCounts[region] ?? 0}
-                  onClick={() => toggleRegion(region)}
+                  key={key}
+                  on={setup[key]}
+                  label={T.setup[key]}
+                  detail={examples.map((code) => FLAG_NAMES.get(code)).join(', ')}
+                  onClick={() => toggle(key)}
                 />
               ))}
             </ul>
           </Panel>
+        )}
+        {/* Always the third column on a wide screen, also when a quiz has no extras. */}
+        <div className="xl:col-start-3">
+          <Panel title={T.setup.round}>
+            <div className="grid grid-cols-2 gap-px bg-slate-200">
+              <div className="flex flex-col gap-1 bg-white px-3 py-2">
+                <SwitchHeading on={countOn} label={T.setup.count} onChange={setCountOn} />
+                {countOn && (
+                  <label className="flex items-center gap-2 pb-1">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={available}
+                      value={countText}
+                      onChange={(event) => setCountText(event.target.value)}
+                      className={CLS.field}
+                    />
+                    <span className="text-slate-500">{unit(count ?? 0)}</span>
+                  </label>
+                )}
+              </div>
+              <div className="flex flex-col gap-1 bg-white px-3 py-2">
+                <SwitchHeading on={timerOn} label={T.setup.timer} onChange={setTimerOn} />
+                {timerOn && (
+                  <label className="flex items-center gap-2 pb-1">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={MAX_TIMER}
+                      value={timerText}
+                      onChange={(event) => setTimerText(event.target.value)}
+                      className={CLS.field}
+                    />
+                    <span className="text-slate-500">{T.setup.timerUnit(timer ?? 0)}</span>
+                  </label>
+                )}
+              </div>
+            </div>
+          </Panel>
         </div>
-        <Panel title={T.setup.extra}>
-          <ul className="divide-y divide-slate-200">
-            {EXTRAS.filter(({ key }) => extras.includes(key)).map(({ key, examples }) => (
-              <CheckRow
-                key={key}
-                on={setup[key]}
-                label={T.setup[key]}
-                detail={examples.map((code) => FLAG_NAMES.get(code)).join(', ')}
-                onClick={() => toggle(key)}
-              />
-            ))}
-          </ul>
-        </Panel>
-        <Panel title={T.setup.round}>
-          <div className="grid grid-cols-2 gap-px bg-slate-200">
-            <div className="flex flex-col gap-1 bg-white px-3 py-2">
-              <SwitchHeading on={countOn} label={T.setup.count} onChange={setCountOn} />
-              {countOn && (
-                <label className="flex items-center gap-2 pb-1">
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={available}
-                    value={countText}
-                    onChange={(event) => setCountText(event.target.value)}
-                    className={CLS.field}
-                  />
-                  <span className="text-slate-500">{unit(count ?? 0)}</span>
-                </label>
-              )}
-            </div>
-            <div className="flex flex-col gap-1 bg-white px-3 py-2">
-              <SwitchHeading on={timerOn} label={T.setup.timer} onChange={setTimerOn} />
-              {timerOn && (
-                <label className="flex items-center gap-2 pb-1">
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={MAX_TIMER}
-                    value={timerText}
-                    onChange={(event) => setTimerText(event.target.value)}
-                    className={CLS.field}
-                  />
-                  <span className="text-slate-500">{T.setup.timerUnit(timer ?? 0)}</span>
-                </label>
-              )}
-            </div>
-          </div>
-        </Panel>
       </main>
 
       <footer className="fixed inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur">

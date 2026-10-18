@@ -133,7 +133,8 @@ export default function QuizRound({
   candidates: Candidates;
   /** What the player answers about: a flag, a country, a capital. */
   prompt: (question: Question, tap: TapState) => ReactNode;
-  placeholder: string;
+  /** The empty input's text; per question when the kind of answer differs. */
+  placeholder: string | ((question: Question) => string);
   tapping?: Tapping;
   /** Seconds per question, or null for no limit. */
   timeLimit: number | null;
@@ -502,7 +503,7 @@ export default function QuizRound({
                 setInput(event.target.value);
                 if (status === 'wrong') setStatus('asking');
               }}
-              placeholder={placeholder}
+              placeholder={typeof placeholder === 'string' ? placeholder : placeholder(question)}
               autoFocus
               autoComplete="off"
               autoCorrect="off"

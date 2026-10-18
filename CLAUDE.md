@@ -127,7 +127,7 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 
 ### Opbouw
 
-- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, `/hoofdsteden/`, later `/landen/` en `/spreuken/`), met een statisch overzicht op `<quiz>/overzicht/`.
+- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, `/hoofdsteden/`, `/landen/`, `/aardrijkskunde/`, later `/spreuken/`), met een statisch overzicht op `<quiz>/overzicht/`.
 - Een quiz met getypte antwoorden is `src/components/quiz/QuizFlow.tsx` (instellen, ronde, eindscherm, historiek) met een dunne schil per quiz (`flags/FlagQuiz.tsx`, `capitals/CapitalQuiz.tsx`): die zegt wat ze selecteert, hoe dat vragen worden (`src/lib/question.ts`) en hoe een vraag eruitziet.
 - Herbruikbare logica staat in `src/lib/`: `matcher.ts` (typfouten), `hints.ts` (masker en letters), `history.ts` en `storage.ts` (localStorage). Een nieuwe quiz hergebruikt die en brengt alleen zijn dataset en schermen mee.
 - Elke quiz is één React-eiland met `client:only="react"`: alles wat het toont hangt af van `localStorage`.
@@ -137,7 +137,7 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 ### Open punten
 
 - `/landen/` heeft de richting "land aangeduid, naam tikken". De tweede richting, "naam gegeven, tik op de kaart", komt er als keuze **Vraag naar** bij, zoals bij de hoofdsteden (beslissing van Steve, 18-10-2026). `/spreuken/` staat als "Binnenkort" op de startpagina.
-- Zeeën en rivieren (gevraagd door Steve op 18-10-2026): een eigen thema met een kaart waarop het gebied duidelijk aangeduid is. Hoort bij dezelfde kaartcomponent als `/landen/`; de data en de opzet liggen nog niet vast.
+- `/aardrijkskunde/` (zeeën, rivieren, gebergtes) heeft alleen de richting "aangeduid, naam tikken". De vormen staan in `public/geo/geo.json` (in git); hoe je ze opnieuw bouwt staat in `docs/aardrijkskunde.md`.
 - Land → vlag (raster van 9 of 16 met lookalikes) is nog niet gebouwd.
 - PWA: er zijn alleen meta-tags voor "zet op beginscherm"; een manifest en service worker voor offline gebruik komen later.
 - Er is nog geen testrunner. De matcher is met de hand nagekeken tegen de gevallen in `docs/vlaggen.md`; Vitest toevoegen is een beslissing voor Steve.
