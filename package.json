@@ -31,9 +31,9 @@
     ]
   },
   "dependencies": {
-    "@astrojs/react": "^7.1.0",
+    "@astrojs/react": "^7.1.1",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.4.0",
+    "astro": "^7.4.2",
     "d3-geo": "^3.1.1",
     "flag-icons": "^7.6.0",
     "react": "^19.3.1",
@@ -43,7 +43,7 @@
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.12",
     "@eslint/js": "^10.0.1",
     "@swc/html": "^1.16.18",
     "@types/d3-geo": "^3.1.1",
@@ -58,7 +58,7 @@
     "prettier-plugin-astro": "^1.1.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.2",
-    "wrangler": "^4.151.1"
+    "typescript-eslint": "^8.72.0",
+    "wrangler": "^4.151.3"
   }
 }
