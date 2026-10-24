@@ -40,7 +40,7 @@ Chrome, op iOS via **Deel** → **Zet op beginscherm** in Safari.
 | d3-geo | 3.1.1 | Projectie en tekenen van de kaart |
 | topojson-client | 3.1.0 | Kaartdata uitpakken |
 | world-atlas | 2.0.2 | Landgrenzen (Natural Earth 1:50m) |
-| wrangler | 4.151.3 | Deploy naar Cloudflare |
+| wrangler | 4.152.0 | Deploy naar Cloudflare |
 
 ## Lokaal draaien
 

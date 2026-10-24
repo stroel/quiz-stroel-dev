@@ -45,7 +45,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "@eslint/js": "^10.0.1",
-    "@swc/html": "^1.16.18",
+    "@swc/html": "^1.16.20",
     "@types/d3-geo": "^3.1.1",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^24.19.2",
@@ -55,10 +55,10 @@
     "eslint": "^10.13.0",
     "eslint-plugin-astro": "^3.2.1",
     "prettier": "^3.9.10",
-    "prettier-plugin-astro": "^1.1.1",
+    "prettier-plugin-astro": "^1.1.2",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0",
-    "wrangler": "^4.151.3"
+    "wrangler": "^4.152.0"
   }
 }
