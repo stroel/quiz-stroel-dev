@@ -143,3 +143,11 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 - Clublogo's (gepland, Steve, 18-10-2026): logo → club voor de clubs van seizoen 2026-27 in Engeland, België, Nederland, Frankrijk, Spanje, Portugal en Duitsland. Bron: football-data.org (SVG op `crests.football-data.org`), eenmalig opgehaald door een script en zelf gehost in `public/crests/` (in git); Steve is akkoord met het publiek hosten. België zit niet in het gratis pakket: die ID's met de hand. Wacht op een werkende API-sleutel (`FOOTBALL_DATA_API_KEY` in `.env` gaf "Your API token is invalid"). Uitwijk: `github.com/luukhopman/football-logos` (alle 7 competities, maar PNG van 139×181 px, geen licentie). Daarna: WK/EK-winnaars als feitvragen, spelers als tekstvragen.
 - PWA: er is een manifest (`public/manifest.webmanifest`, iconen in `public/icons/`), dus de app is te installeren; een service worker voor offline gebruik komt later.
 - Er is nog geen testrunner. De matcher is met de hand nagekeken tegen de gevallen in `docs/vlaggen.md`; Vitest toevoegen is een beslissing voor Steve.
+- Landenweetjes (25-10-2026), na te kijken:
+  - Inwonersnamen komen uit Wayback-kopieën van `namen.taalunie.org` (de site gaf toen een fout). Vergelijken met de live site zodra die werkt.
+  - Twijfelachtige nummerplaatcodes: Taiwan (RC), Palestina (PS, op de platen staat P), Bahrein (BRN of BHR). Oman, VAE, Irak, Panama, Colombia en Zambia steunen alleen op twee Wikipedia's; Cuba is weggelaten omdat de bronnen botsen. Zie `docs/landenweetjes.md`.
+  - Munten veranderen (Bulgarije, Kroatië, Caribische gulden, Zimbabwe): bij een nieuwe versie van bijlage A5 van de EU-schrijfwijzer `src/data/country-facts.ts` nalopen.
+- Taal (25-10-2026):
+  - Na te kijken in `src/data/animals.ts`: geluiden zonder bron (beer brommen, kraai krassen, kat mauwen, hond keffen), het West-Vlaamse `keu` (big) dat ook goed is, en `lam` vóór `geitje` als jong van een geit.
+  - Het Lucide-icoon `languages` op de startpagina is uit het hoofd overgenomen; vergelijken met lucide.dev.
+  - Kan later: de omgekeerde richting voor dieren (veulen → paard) en het Nederlandse spellingsalfabet (Anton, Bernard, …) als reeks naast de NAVO.
