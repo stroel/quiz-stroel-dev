@@ -6,7 +6,7 @@ import { T } from '@/i18n/nl';
 import { buildMask, canHint, nextHint, NO_HINTS, type HintState, type MaskCell } from '@/lib/hints';
 import { flagSrc } from '@/lib/flag-pool';
 import type { QuestionResult } from '@/lib/history';
-import { matchAnswer, normalize } from '@/lib/matcher';
+import { matchAnswer, matchExact, normalize } from '@/lib/matcher';
 import type { Candidates, Question } from '@/lib/question';
 
 export type Status = 'asking' | 'wrong' | 'correct' | 'revealed';
@@ -257,7 +257,9 @@ export default function QuizRound({
     }
     if (normalize(input) === '') return;
 
-    const match = matchAnswer(input, expected, candidates);
+    const match = question.exact
+      ? matchExact(input, expected)
+      : matchAnswer(input, expected, candidates);
 
     if (!match.correct) {
       setStatus('wrong');

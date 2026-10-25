@@ -8,10 +8,11 @@ import Base from '@/layouts/Base.astro';
 
 const quizzes = [
   { href: '/vlaggen/', icon: 'flag', ...T.quizzes.vlaggen, ready: true },
-  { href: '/hoofdsteden/', icon: 'landmark', ...T.quizzes.hoofdsteden, ready: true },
+  { href: '/landenweetjes/', icon: 'landmark', ...T.quizzes.landenweetjes, ready: true },
   { href: '/landen/', icon: 'map', ...T.quizzes.landen, ready: true },
   { href: '/aardrijkskunde/', icon: 'mountain', ...T.quizzes.aardrijkskunde, ready: true },
   { href: '/citaten/', icon: 'quote', ...T.quizzes.citaten, ready: true },
+  { href: '/taal/', icon: 'languages', ...T.quizzes.taal, ready: true },
 ];
 const ready = quizzes.filter((quiz) => quiz.ready);
 const soon = quizzes.filter((quiz) => !quiz.ready);

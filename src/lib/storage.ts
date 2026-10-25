@@ -20,3 +20,18 @@ export function writeJson(key: string, value: unknown): void {
     console.warn(`[storage] could not write ${key}`, error);
   }
 }
+
+/**
+ * Moves a value to a new key once, for a quiz that was renamed: the old value
+ * is copied only while the new key is empty, so nothing played since is lost.
+ */
+export function moveKey(from: string, to: string): void {
+  try {
+    const old = localStorage.getItem(from);
+    if (old === null) return;
+    if (localStorage.getItem(to) === null) localStorage.setItem(to, old);
+    localStorage.removeItem(from);
+  } catch (error) {
+    console.warn(`[storage] could not move ${from} to ${to}`, error);
+  }
+}

@@ -1572,7 +1572,7 @@ export const QUOTES: Quote[] = [
   quote({
     id: 'houston-problem',
     group: F,
-    ...film('Apollo 13', 'Jim Lovell'),
+    ...film('Apollo 13', 'Apollo', 'Jim Lovell'),
     year: 1995,
     text: 'Houston, we have a problem.',
     context: 'Jim Lovell',

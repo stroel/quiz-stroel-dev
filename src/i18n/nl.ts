@@ -12,13 +12,17 @@ export const T = {
   },
   quizzes: {
     vlaggen: { title: 'Vlaggen', description: 'Herken de vlag en tik het land.' },
-    hoofdsteden: { title: 'Hoofdsteden', description: 'Ken je de hoofdstad van elk land?' },
+    landenweetjes: {
+      title: 'Landenweetjes',
+      description: 'Hoofdsteden, inwoners, munten en meer.',
+    },
     landen: { title: 'Landen', description: 'Herken het land op de kaart.' },
     aardrijkskunde: {
       title: 'Aardrijkskunde',
       description: 'Zeeën, rivieren en gebergtes op de kaart.',
     },
     citaten: { title: 'Citaten', description: 'Wie zei het? Of uit welke film komt het?' },
+    taal: { title: 'Taal', description: 'Dierennamen, het NAVO-alfabet, fobieën en meer.' },
   },
   regions: {
     europa: 'Europa',
@@ -85,6 +89,57 @@ export const T = {
     countries: (count: number) => (count === 1 ? 'land' : 'landen'),
     quotes: (count: number) => (count === 1 ? 'citaat' : 'citaten'),
   },
+  language: {
+    groups: { dieren: 'Dieren', woorden: 'Woorden', getallen: 'Getallen' },
+    series: {
+      jong: 'Het jong',
+      mannetje: 'Het mannetje',
+      vrouwtje: 'Het vrouwtje',
+      groep: 'Een groep',
+      geluid: 'Het geluid',
+      verblijf: 'Waar het woont',
+      navo: 'NAVO-alfabet',
+      grieks: 'Griekse letters',
+      logie: 'Wetenschappen',
+      fobie: 'Fobieën',
+      telwoord: 'Telwoorden',
+      'romeins-lezen': 'Romeinse cijfers lezen',
+      'romeins-schrijven': 'Romeinse cijfers schrijven',
+    },
+    /** The line above the prompt. Telwoorden take theirs from `askCount`. */
+    ask: {
+      jong: 'Het jong van een',
+      mannetje: 'Het mannetje van een',
+      vrouwtje: 'Het vrouwtje van een',
+      groep: 'Een groep',
+      geluid: 'Welk geluid maakt een',
+      verblijf: 'Waar woont een',
+      navo: 'In het NAVO-alfabet',
+      grieks: 'Welke Griekse letter?',
+      logie: 'De studie van',
+      fobie: 'Angst voor',
+      telwoord: 'Hoeveel is',
+      'romeins-lezen': 'Welk getal is',
+      'romeins-schrijven': 'In Romeinse cijfers',
+    },
+    askCount: { stuks: 'Hoeveel stuks is', jaar: 'Hoeveel jaar is', uur: 'Hoeveel uur is' },
+    placeholder: {
+      jong: 'Het jong?',
+      mannetje: 'Het mannetje?',
+      vrouwtje: 'Het vrouwtje?',
+      groep: 'Welke groep?',
+      geluid: 'Welk geluid?',
+      verblijf: 'Waar?',
+      navo: 'Welk woord?',
+      grieks: 'Welke letter?',
+      logie: 'Welke -logie?',
+      fobie: 'Welke fobie?',
+      telwoord: 'Hoeveel?',
+      'romeins-lezen': 'Welk getal?',
+      'romeins-schrijven': 'Romeinse cijfers?',
+    },
+    empty: 'Kies minstens één reeks.',
+  },
   quotes: {
     groupsTitle: 'Reeksen',
     groups: {
@@ -97,16 +152,45 @@ export const T = {
     note: (year: number | undefined, context: string) =>
       year === undefined ? context : `${year < 0 ? `${-year} v.Chr.` : year}, ${context}`,
   },
-  capitals: {
+  facts: {
     direction: 'Vraag naar',
-    toCapital: 'De hoofdstad',
-    toCapitalDetail: 'Je ziet België, je tikt Brussel.',
-    toCountry: 'Het land',
-    toCountryDetail: 'Je ziet Brussel, je tikt België.',
-    askCapital: 'Wat is de hoofdstad van',
-    askCountry: 'is de hoofdstad van welk land?',
-    placeholderCapital: 'Hoofdstad?',
-    placeholderCountry: 'Welk land?',
+    options: {
+      capital: { label: 'De hoofdstad', detail: 'Je ziet België, je tikt Brussel.' },
+      country: { label: 'Het land bij de hoofdstad', detail: 'Je ziet Brussel, je tikt België.' },
+      demonym: { label: 'De inwoner', detail: 'Je ziet België, je tikt Belg.' },
+      adjective: {
+        label: 'Het bijvoeglijk naamwoord',
+        detail: 'Je ziet België, je tikt Belgisch.',
+      },
+      currency: { label: 'De munt', detail: 'Je ziet Zwitserland, je tikt Zwitserse frank.' },
+      tld: {
+        label: 'Het land bij de internetextensie',
+        detail: 'Je ziet .ch, je tikt Zwitserland.',
+      },
+      plate: { label: 'Het land bij de nummerplaat', detail: 'Je ziet CH, je tikt Zwitserland.' },
+    },
+    /** Above the country name, which follows with a question mark. */
+    askAbout: {
+      capital: 'Wat is de hoofdstad van',
+      demonym: 'Hoe heet een inwoner van',
+      adjective: 'Het bijvoeglijk naamwoord bij',
+      currency: 'Welke munt gebruikt',
+    },
+    /** Under a capital, extension or plate code, which is shown alone. */
+    askCountry: {
+      country: 'is de hoofdstad van welk land?',
+      tld: 'is de internetextensie van welk land?',
+      plate: 'staat op de nummerplaat van welk land?',
+    },
+    placeholder: {
+      capital: 'Hoofdstad?',
+      country: 'Welk land?',
+      demonym: 'Inwoner?',
+      adjective: 'Bijvoeglijk?',
+      currency: 'Welke munt?',
+      tld: 'Welk land?',
+      plate: 'Welk land?',
+    },
   },
   countries: {
     mapLabel: 'Kaart met het land om te raden',

@@ -6,17 +6,22 @@ startpagina laat je een quiz kiezen:
 - **Vlaggen** (`/vlaggen/`): je krijgt een vlag te zien en tikt het land. Typfouten en spelling op
   het gehoor worden aanvaard. Er zijn hints met een masker en losse letters, en een eindscherm
   zonder punten. Zie [`docs/vlaggen.md`](docs/vlaggen.md).
-- **Hoofdsteden** (`/hoofdsteden/`): je ziet een land en tikt de hoofdstad, of omgekeerd. Zie
-  [`docs/hoofdsteden.md`](docs/hoofdsteden.md).
+- **Landenweetjes** (`/landenweetjes/`): je ziet een land en tikt de hoofdstad, hoe een inwoner
+  heet, het bijvoeglijk naamwoord of de munt; of je ziet een hoofdstad, internetextensie of
+  nummerplaatcode en tikt het land. Vroeger `/hoofdsteden/`, dat nu doorverwijst. Zie
+  [`docs/landenweetjes.md`](docs/landenweetjes.md).
 - **Landen** (`/landen/`): een land is ingekleurd op de kaart en je tikt de naam. Zie
   [`docs/landen.md`](docs/landen.md).
 - **Aardrijkskunde** (`/aardrijkskunde/`): een zee, rivier of gebergte is aangeduid op de kaart en
   je tikt de naam, of je krijgt de naam en tikt het aan op de kaart. Zie [`docs/aardrijkskunde.md`](docs/aardrijkskunde.md).
 - **Citaten** (`/citaten/`): je leest een bekende uitspraak en tikt wie het zei, of uit welke
   film of serie ze komt. Zie [`docs/citaten.md`](docs/citaten.md).
+- **Taal** (`/taal/`): dierennamen (het jong, het mannetje, het vrouwtje, de groep, het geluid,
+  waar het woont), het NAVO-alfabet, Griekse letters, wetenschappen, fobieën, telwoorden en
+  Romeinse cijfers. Zie [`docs/taal.md`](docs/taal.md).
 
-Vlaggen, hoofdsteden en citaten hebben een **Overzicht** (`/vlaggen/overzicht/`,
-`/hoofdsteden/overzicht/`, `/citaten/overzicht/`) met alle vragen en antwoorden per regio of
+Vlaggen, landenweetjes, citaten en taal hebben een **Overzicht** (`/vlaggen/overzicht/`,
+`/landenweetjes/overzicht/`, `/citaten/overzicht/`, `/taal/overzicht/`) met alle vragen en antwoorden per regio of
 reeks, om door te scrollen. Het overzicht van aardrijkskunde
 (`/aardrijkskunde/overzicht/`) toont één reeks tegelijk op de kaart, met de namen in een lijst.
 

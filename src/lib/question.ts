@@ -15,6 +15,8 @@ export interface Question {
   label?: string;
   /** A short note shown once the question is answered. */
   note?: string;
+  /** Only the exact spelling counts: no typos, no sound-alikes (Roman numerals). */
+  exact?: true;
 }
 
 /** Every answer a quiz knows, so a near-miss on another one is still caught. */

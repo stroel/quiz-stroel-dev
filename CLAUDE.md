@@ -28,7 +28,7 @@ Twijfel je over architectuur: **stop en vraag het aan Steve**, of kijk in de doc
 2. Lees `CONVENTIONS.md` voor codestijl en patronen
 3. Lees `STYLEGUIDE.md` voor UI-conventies, en de skill `/quiz-design` (`.claude/skills/quiz-design/`) voor de layout van de quiz; waar ze botsen, wint de skill
 4. Lees de projectspecifieke docs die bij de huidige taak horen
-5. Lees `docs/vlaggen.md` voor je aan de vlaggenquiz, de gedeelde quizschermen of de matcher werkt, `docs/hoofdsteden.md` voor de hoofdsteden en `docs/citaten.md` voor de citaten
+5. Lees `docs/vlaggen.md` voor je aan de vlaggenquiz, de gedeelde quizschermen of de matcher werkt, `docs/landenweetjes.md` voor de hoofdsteden en andere landenweetjes, `docs/citaten.md` voor de citaten en `docs/taal.md` voor taal
 
 ## Bij het maken van wijzigingen
 
@@ -127,12 +127,13 @@ Cloudflare-account `b9f47bdfd5561613df8a0f20d7795cff` (STROEL). `CLOUDFLARE_ACCO
 
 ### Opbouw
 
-- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, `/hoofdsteden/`, `/landen/`, `/aardrijkskunde/`, `/citaten/`), met een overzicht op `<quiz>/overzicht/` (statisch, behalve dat van aardrijkskunde: een kaart als eiland).
-- Een quiz met getypte antwoorden is `src/components/quiz/QuizFlow.tsx` (instellen, ronde, eindscherm, historiek) met een dunne schil per quiz (`flags/FlagQuiz.tsx`, `capitals/CapitalQuiz.tsx`): die zegt wat ze selecteert, hoe dat vragen worden (`src/lib/question.ts`) en hoe een vraag eruitziet.
+- `quiz.stroel.dev/` is de startpagina met een keuze per quiz; elke quiz is een eigen pad (`/vlaggen/`, `/landenweetjes/`, `/landen/`, `/aardrijkskunde/`, `/citaten/`, `/taal/`), met een overzicht op `<quiz>/overzicht/` (statisch, behalve dat van aardrijkskunde: een kaart als eiland).
+- De hoofdsteden zitten sinds 25-10-2026 in **Landenweetjes**, samen met inwoners, bijvoeglijke naamwoorden, munten, internetextensies en nummerplaten (Steve). `/hoofdsteden/` verwijst door via `public/_redirects`; de oude localStorage-sleutels verhuizen bij het eerste bezoek. Zie `docs/landenweetjes.md`.
+- Een quiz met getypte antwoorden is `src/components/quiz/QuizFlow.tsx` (instellen, ronde, eindscherm, historiek) met een dunne schil per quiz (`flags/FlagQuiz.tsx`, `facts/FactQuiz.tsx`, `words/WordQuiz.tsx`): die zegt wat ze selecteert, hoe dat vragen worden (`src/lib/question.ts`) en hoe een vraag eruitziet. Een vraag met `exact` (getallen, Romeinse cijfers) slaat de typfoutentolerantie over.
 - Herbruikbare logica staat in `src/lib/`: `matcher.ts` (typfouten), `hints.ts` (masker en letters), `history.ts` en `storage.ts` (localStorage). Een nieuwe quiz hergebruikt die en brengt alleen zijn dataset en schermen mee.
 - Elke quiz is één React-eiland met `client:only="react"`: alles wat het toont hangt af van `localStorage`.
 - Alle teksten staan in `src/i18n/nl.ts`.
-- Woordkeuze: de quizzen op de startpagina (Vlaggen, Hoofdsteden, Landen, …) heten **thema's**, niet categorieën (Steve, 18-10-2026). Gebruik dat woord in UI-teksten en docs.
+- Woordkeuze: de quizzen op de startpagina (Vlaggen, Landenweetjes, Landen, …) heten **thema's**, niet categorieën (Steve, 18-10-2026). Gebruik dat woord in UI-teksten en docs.
 
 ### Open punten
 

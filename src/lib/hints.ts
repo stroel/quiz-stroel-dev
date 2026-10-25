@@ -13,9 +13,9 @@ export interface HintState {
 
 export const NO_HINTS: HintState = { level: 0, revealed: [] };
 
-/** A slot holds a letter the player has to supply; anything else is shown as is. */
+/** A slot holds a letter or digit the player has to supply; anything else is shown as is. */
 export function isSlot(char: string): boolean {
-  return /\p{L}/u.test(char);
+  return /[\p{L}\p{N}]/u.test(char);
 }
 
 function slotIndexes(answer: string): number[] {

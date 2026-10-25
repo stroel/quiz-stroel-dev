@@ -20,13 +20,16 @@ export interface MatchResult {
 // add freely ("Republiek Congo" vs "Congo").
 const FILLER_WORDS = new Set(['republiek', 'van', 'de', 'het', 'en']);
 
-/** Lower case, no accents, letters and single spaces only, filler words removed. */
+/**
+ * Lower case, no accents, letters, digits and single spaces only, filler words
+ * removed. Digits stay so a number ("300", "1994") is an answer at all.
+ */
 export function normalize(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
-    .replace(/[^a-z]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
     .trim()
     .split(' ')
     .filter((word) => word !== '' && !FILLER_WORDS.has(word))
@@ -90,6 +93,17 @@ export function tolerance(key: string): number {
 
 function closestDistance(input: string, names: string[]): number {
   return Math.min(...names.map((name) => editDistance(input, phoneticKey(name))));
+}
+
+/**
+ * Only the spelling counts: no sound-alikes and no typos. For answers where one
+ * letter changes the meaning, like Roman numerals (XIV is not XV, and the
+ * phonetic key would fold III into I).
+ */
+export function matchExact(input: string, expected: MatchCandidate): MatchResult {
+  const typed = normalize(input).replace(/ /g, '');
+  const correct = expected.names.some((name) => normalize(name).replace(/ /g, '') === typed);
+  return { correct, approximate: false };
 }
 
 /**

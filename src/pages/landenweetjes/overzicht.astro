@@ -1,21 +1,32 @@
 ---
-// Every country with its capital, per region: to read through before playing.
+// Every country with its capital and the other facts, per region: to read
+// through before playing.
 import FlagThumb from '@/components/FlagThumb.astro';
 import Panel from '@/components/Panel.astro';
 import { T } from '@/i18n/nl';
 import Overview from '@/layouts/Overview.astro';
-import { capitalOf } from '@/lib/capital-pool';
+import { capitalOf, factsOf } from '@/lib/fact-pool';
 import { overviewSections } from '@/lib/overview';
 
 const sections = overviewSections({ organisations: false }, (flag) => !!capitalOf(flag.code));
+
+// "Belg · Belgisch · euro · .be · B": whatever is known, in the order of the setup screen.
+function factLine(code: string): string {
+  const facts = factsOf(code);
+  if (!facts) return '';
+  return [facts.demonym?.[0], facts.adjective?.[0], facts.currency?.[0], facts.tld, facts.plate]
+    .filter((part) => part !== undefined)
+    .join(' · ');
+}
 ---
 
-<Overview quizTitle={T.quizzes.hoofdsteden.title} quizHref="/hoofdsteden/">
+<Overview quizTitle={T.quizzes.landenweetjes.title} quizHref="/landenweetjes/">
   {sections.map((section) => (
     <Panel collapsible title={section.title} aside={String(section.entries.length)}>
       <ul class="divide-y divide-slate-200 md:-mb-px md:grid md:grid-cols-2 md:divide-y-0 lg:grid-cols-3 xl:grid-cols-4">
         {section.entries.map((flag) => {
           const capital = capitalOf(flag.code)!;
+          const facts = factLine(flag.code);
           return (
             <li class="flex items-center gap-4 px-4 py-2.5 md:border-b md:border-slate-200">
               <FlagThumb code={flag.code} caption={`${flag.name}: ${capital.name}`} />
@@ -24,12 +35,16 @@ const sections = overviewSections({ organisations: false }, (flag) => !!capitalO
                   <span class="text-slate-500">{flag.name}</span>
                   <span class="font-semibold">{capital.name}</span>
                 </span>
+                {facts && <span class="text-sm text-slate-700">{facts}</span>}
                 {capital.alsoAccepted && (
                   <span class="text-sm text-slate-500">
                     {T.overview.alsoAccepted(capital.alsoAccepted.join(', '))}
                   </span>
                 )}
                 {capital.note && <span class="text-sm text-slate-500">{capital.note}</span>}
+                {factsOf(flag.code)?.currencyNote && (
+                  <span class="text-sm text-slate-500">{factsOf(flag.code)?.currencyNote}</span>
+                )}
               </span>
             </li>
           );
