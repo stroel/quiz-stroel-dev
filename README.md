@@ -68,6 +68,12 @@ Bij elke start kopieert `src/integrations/flag-assets.ts` de gebruikte vlaggen n
 | `pnpm lint` | ESLint |
 | `pnpm typecheck` | `astro check` |
 | `pnpm format` | Prettier |
+| `node scripts/build-app-icons.mjs` | De app-iconen in `public/icons/` opnieuw maken |
+
+Het app-icoon is een zwart vlak met het STROEL-teken in wit links en rechts het vraagteken uit het
+Lucide-icoon `circle-question-mark` (zonder de cirkel), zoals elke STROEL-app (met een eigen icoon ernaast). De favicon in
+de browser blijft het teken alleen (`stroel.dev/favicon.svg`). Het *maskable* icoon is een apart
+bestand (`icon-maskable-512.png`) met de inhoud op 80 %, zodat Android het niet afsnijdt.
 
 ## Deployen
 
