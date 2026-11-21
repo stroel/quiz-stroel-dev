@@ -37,7 +37,7 @@ Chrome, op iOS via **Deel** → **Zet op beginscherm** in Safari.
 
 | Pakket | Versie | Rol |
 |---|---|---|
-| Astro | 7.4.12 | Statische site |
+| Astro | 7.4.13 | Statische site |
 | @astrojs/react | 7.1.9 | Eilanden voor de quizzen |
 | React | 19.3.1 | UI van de quizzen |
 | Tailwind CSS | 4.3.5 | Styling |
@@ -45,7 +45,7 @@ Chrome, op iOS via **Deel** → **Zet op beginscherm** in Safari.
 | d3-geo | 3.1.2 | Projectie en tekenen van de kaart |
 | topojson-client | 3.1.0 | Kaartdata uitpakken |
 | world-atlas | 2.0.2 | Landgrenzen (Natural Earth 1:50m) |
-| wrangler | 4.164.0 | Deploy naar Cloudflare |
+| wrangler | 4.166.0 | Deploy naar Cloudflare |
 
 ## Lokaal draaien
 
